@@ -28,29 +28,100 @@ Adelheit ist ein leistungsfähiger Discord-Musikbot, der entwickelt wurde, um na
 - Gson
 - Logback Classic
 
-## 🚀 Einrichtung
+## 🚀 Installation
 
 ### Voraussetzungen
-- Java Development Kit (JDK) 21
-- Maven
+- Linux-System (getestet auf Ubuntu)
+- Internetverbindung
 - Discord Bot Token
 
-### Konfiguration
-1. Kopiere `config.properties.example` zu `config.properties`
-2. Ersetze `YOUR_TOKEN_HERE` mit deinem Discord Bot Token
-3. Konfiguriere Bot-Einstellungen in `config.properties`
+### Installationsschritte
 
-### Installation
+#### 1. Systemaktualisierung
 ```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+#### 2. Java Installation
+```bash
+sudo apt install -y openjdk-21-jdk
+java --version  # Überprüfen der Installation
+```
+
+#### 3. Maven und Git Installation
+```bash
+sudo apt install -y maven git
+mvn --version   # Überprüfen der Installation
+```
+
+#### 4. Repository klonen
+```bash
+# Wechseln Sie in Ihr Projektverzeichnis
+cd ~/Projects
+
 # Repository klonen
-git clone https://github.com/Quartel/discord-adelheit
-cd adelheit
+git clone https://github.com/Quartel/discord-adelheit.git
+cd discord-adelheit
+```
 
-# Abhängigkeiten installieren
-mvn clean install
+#### 5. Konfiguration vorbereiten
+```bash
+# Konfigurationsdatei kopieren
+cp src/main/resources/config.properties.example src/main/resources/config.properties
 
-# Bot starten
-mvn exec:java
+# Bearbeiten Sie die Konfigurationsdatei
+nano src/main/resources/config.properties
+```
+
+Passen Sie folgende Werte an:
+- `bot.token=IHR_DISCORD_BOT_TOKEN`
+- Optional: Präfix, Aktivität etc. anpassen
+
+#### 6. Bot kompilieren
+```bash
+# Projekt bauen
+mvn clean package
+```
+
+#### 7. Bot starten
+```bash
+# Direkter Start
+java -jar target/discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+```
+
+### Produktivbetrieb mit Systemd
+
+#### Systemd-Service erstellen
+```bash
+sudo nano /etc/systemd/system/adelheit-bot.service
+```
+
+Inhalt der Datei:
+```
+[Unit]
+Description=Adelheit Discord Bot
+After=network.target
+
+[Service]
+Type=simple
+User=DEIN_BENUTZERNAME
+WorkingDirectory=/home/DEIN_BENUTZERNAME/Projects/discord-adelheit
+ExecStart=/usr/bin/java -jar /home/DEIN_BENUTZERNAME/Projects/discord-adelheit/target/discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Service aktivieren
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable adelheit-bot
+sudo systemctl start adelheit-bot
+
+# Status überprüfen
+sudo systemctl status adelheit-bot
 ```
 
 ## 🎮 Verfügbare Befehle
@@ -65,19 +136,10 @@ mvn exec:java
 - `/pause`: Wiedergabe pausieren
 - `/resume`: Wiedergabe fortsetzen
 
-## 📁 Projektstruktur
-```
-src/
-├── main/
-│   ├── java/com/quartel/discordbot/
-│   │   ├── core/           # Kern-Bot-Funktionalität
-│   │   ├── config/         # Konfigurationsmanagement
-│   │   └── modules/        # Modulsystem (z.B. Musikmodul)
-│   └── resources/
-│       ├── config.properties    # Bot-Konfiguration
-│       └── music_library.json   # Musik-Bibliothekskonfiguration
-└── test/                   # Unittest-Verzeichnis
-```
+## 🚧 Troubleshooting
+- Überprüfen Sie, ob der Bot-Token korrekt ist
+- Prüfen Sie Logdateien unter `logs/`
+- Stellen Sie sicher, dass alle Abhängigkeiten installiert sind
 
 ## 🤝 Beitragen
 1. Forke das Projekt
