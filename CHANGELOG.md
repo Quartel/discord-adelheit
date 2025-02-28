@@ -5,7 +5,7 @@
 ### Added
 - Grundlegende Musikwiedergabe-Funktionalität
 - Lokale und Remote-Playlist-Unterstützung
-- Modulares Bot-Design mit Musik-Modul
+- Modulares Bot-Design mit Musik Modul
 - Slash-Commands für Musiksteuerung:
     - `/play` - Musik abspielen
     - `/skip` - Track überspringen
