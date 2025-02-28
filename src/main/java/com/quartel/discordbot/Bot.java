@@ -2,164 +2,301 @@ package com.quartel.discordbot;
 
 import com.quartel.discordbot.config.Config;
 import com.quartel.discordbot.core.CommandManager;
-import com.quartel.discordbot.core.commands.PingCommand;
-import com.quartel.discordbot.core.commands.PingSlashCommand;
-import com.quartel.discordbot.core.listeners.MessageListener;
 import com.quartel.discordbot.core.listeners.SlashCommandListener;
-// import com.quartel.discordbot.modules.music.MusicModule;  // Auskommentiert für den Test
-
+import com.quartel.discordbot.modules.Module;
+import com.quartel.discordbot.modules.music.MusicModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Hauptklasse des Discord Bots
- * Verantwortlich für die Initialisierung und Konfiguration des Bots
+ * Die Hauptklasse des Discord-Bots.
  */
-public class Bot {
+public class Bot extends ListenerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(Bot.class);
+    private static Bot instance;
 
-    private static JDA jda;
-    private static CommandManager commandManager;
+    private JDA jda;
+    private CommandManager commandManager;
+    private final Map<String, Module> modules = new HashMap<>();
+    private boolean running = false;
 
     /**
-     * Einstiegspunkt der Anwendung
+     * Privater Konstruktor für Singleton-Muster.
      */
-    public static void main(String[] args) {
+    private Bot() {
+        LOGGER.info("Bot-Instanz erstellt");
+    }
+
+    /**
+     * Gibt die einzige Instanz des Bots zurück oder erstellt sie, falls sie nicht existiert.
+     *
+     * @return Die Bot-Instanz
+     */
+    public static synchronized Bot getInstance() {
+        if (instance == null) {
+            instance = new Bot();
+        }
+        return instance;
+    }
+
+    /**
+     * Startet den Bot.
+     */
+    public void start() {
+        if (running) {
+            LOGGER.warn("Bot läuft bereits");
+            return;
+        }
+
+        LOGGER.info("Starte Bot...");
+
         try {
-            // Lade die Konfigurationsdatei
-            Config.load();
-            LOGGER.info("Konfiguration geladen.");
+            // Konfiguration laden
+            String token = Config.getToken();
+            if (token == null || token.isEmpty() || "YOUR_TOKEN_HERE".equals(token)) {
+                LOGGER.error("Kein gültiger Bot-Token in der Konfiguration gefunden");
+                return;
+            }
 
-            // Initialisiere CommandManager
-            commandManager = new CommandManager();
+            // JDA konfigurieren und erstellen
+            JDABuilder builder = JDABuilder.createDefault(token)
+                    // Aktiviere notwendige Intents
+                    .enableIntents(
+                            GatewayIntent.GUILD_MEMBERS,
+                            GatewayIntent.GUILD_MESSAGES,
+                            GatewayIntent.GUILD_VOICE_STATES,
+                            GatewayIntent.MESSAGE_CONTENT
+                    )
+                    // Cache-Einstellungen
+                    .setMemberCachePolicy(MemberCachePolicy.VOICE)
+                    .setChunkingFilter(ChunkingFilter.NONE)
+                    .enableCache(CacheFlag.VOICE_STATE)
+                    // Bot-Status
+                    .setStatus(OnlineStatus.ONLINE)
+                    .setActivity(Activity.playing(Config.getActivity()));
 
-            // Registriere Testbefehle
-            registerTestCommands();
+            // Bot erstellen und auf Bereitschaft warten
+            jda = builder.build().awaitReady();
+            LOGGER.info("JDA erfolgreich initialisiert");
 
-            // Initialisiere den Bot
-            initializeBot();
+            // Command-Manager erstellen
+            commandManager = new CommandManager(jda);
+            commandManager.registerDefaultListeners();
 
-            // Registriere Slash-Befehle bei Discord
-            commandManager.registerSlashCommandsWithDiscord(jda);
+            // SlashCommandListener hinzufügen
+            jda.addEventListener(new SlashCommandListener(this));
 
-            // Initialisiere Module - auskommentiert für den Test
-            // initializeModules();
+            // Module registrieren und laden
+            registerModules();
+            loadEnabledModules();
 
+            running = true;
             LOGGER.info("Bot erfolgreich gestartet!");
+
         } catch (Exception e) {
-            LOGGER.error("Fehler beim Starten des Bots:", e);
-            System.exit(1);
+            LOGGER.error("Fehler beim Starten des Bots", e);
         }
     }
 
     /**
-     * Initialisiert die JDA-Instanz mit den notwendigen Konfigurationen
+     * Stoppt den Bot.
      */
-    private static void initializeBot() throws Exception {
-        // Hole den Bot-Token aus der Konfiguration
-        String token = Config.getString("bot.token");
-        if (token == null || token.isEmpty() || token.equals("YOUR_TOKEN_HERE")) {
-            LOGGER.error("Kein gültiger Bot-Token in der Konfiguration gefunden!");
-            throw new IllegalArgumentException("Ungültiger Bot-Token");
+    public void stop() {
+        if (!running) {
+            LOGGER.warn("Bot ist nicht gestartet");
+            return;
         }
 
-        // Aktivitätstext für den Bot
-        String activityText = Config.getString("bot.activity", "Musik");
+        LOGGER.info("Stoppe Bot...");
 
-        // Definiere benötigte Gateway Intents (Berechtigungen für den Bot)
-        EnumSet<GatewayIntent> intents = EnumSet.of(
-                GatewayIntent.GUILD_MESSAGES,       // Für Nachrichten in Servern
-                GatewayIntent.MESSAGE_CONTENT,      // Für Nachrichteninhalte
-                GatewayIntent.GUILD_VOICE_STATES    // Für Voice-Funktionalität
-        );
+        try {
+            // Module deaktivieren
+            disableAllModules();
 
-        // Erstelle und konfiguriere die JDA-Instanz
-        jda = JDABuilder.createDefault(token)
-                .setStatus(OnlineStatus.ONLINE)
-                .setActivity(Activity.playing(activityText))
-                .enableIntents(intents)
-                .enableCache(CacheFlag.VOICE_STATE) // Cache für Voice-States aktivieren
-                .addEventListeners(
-                        new MessageListener(),       // Für Textnachrichten-Befehle
-                        new SlashCommandListener()   // Für Slash-Befehle
-                )
-                .build();
+            // Listener entfernen
+            if (commandManager != null) {
+                commandManager.removeAllListeners();
+            }
 
-        // Warte, bis der Bot vollständig verbunden ist
-        jda.awaitReady();
-
-        // Füge einen Shutdown Hook hinzu, um den Bot sauber zu beenden
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Bot wird heruntergefahren...");
+            // JDA herunterfahren
             if (jda != null) {
                 jda.shutdown();
+                jda = null;
             }
-        }));
+
+            running = false;
+            LOGGER.info("Bot erfolgreich gestoppt");
+
+        } catch (Exception e) {
+            LOGGER.error("Fehler beim Stoppen des Bots", e);
+        }
     }
 
     /**
-     * Registriert einige einfache Testbefehle für den Bot
+     * Registriert alle verfügbaren Module.
      */
-    private static void registerTestCommands() {
-        LOGGER.info("Testbefehle werden registriert...");
+    private void registerModules() {
+        // Musik-Modul registrieren
+        registerModule(new MusicModule());
 
-        // Registriere Textnachrichten-Befehl
-        commandManager.registerCommand(new PingCommand());
+        // Hier könnten weitere Module registriert werden
 
-        // Registriere Slash-Befehl
-        commandManager.registerSlashCommand(new PingSlashCommand());
-
-        LOGGER.info("Testbefehle erfolgreich registriert");
+        LOGGER.info("{} Module registriert", modules.size());
     }
 
     /**
-     * Initialisiert alle aktivierten Module basierend auf der Konfiguration
-     * (Auskommentiert für den Test)
+     * Registriert ein Modul.
+     *
+     * @param module Das zu registrierende Modul
      */
-    /*
-    private static void initializeModules() {
-        String enabledModules = Config.getString("modules.enabled", "music");
+    public void registerModule(Module module) {
+        modules.put(module.getName().toLowerCase(), module);
+        module.load();
+        LOGGER.info("Modul {} registriert", module.getName());
+    }
 
-        // Überprüfe, welche Module aktiviert sind
-        for (String module : enabledModules.split(",")) {
-            module = module.trim().toLowerCase();
+    /**
+     * Lädt alle in der Konfiguration aktivierten Module.
+     */
+    private void loadEnabledModules() {
+        String[] enabledModules = Config.getEnabledModules();
 
-            switch (module) {
-                case "music":
-                    // Initialisiere das Musik-Modul
-                    new MusicModule().initialize(jda, commandManager);
-                    LOGGER.info("Musik-Modul initialisiert");
-                    break;
+        if (enabledModules.length == 0) {
+            LOGGER.warn("Keine Module in der Konfiguration aktiviert");
+            return;
+        }
 
-                // Hier können weitere Module hinzugefügt werden
+        for (String moduleName : enabledModules) {
+            enableModule(moduleName.trim().toLowerCase());
+        }
+    }
 
-                default:
-                    LOGGER.warn("Unbekanntes Modul in der Konfiguration: {}", module);
+    /**
+     * Aktiviert ein Modul anhand seines Namens.
+     *
+     * @param moduleName Der Name des zu aktivierenden Moduls
+     * @return true, wenn das Modul erfolgreich aktiviert wurde, sonst false
+     */
+    public boolean enableModule(String moduleName) {
+        Module module = modules.get(moduleName.toLowerCase());
+
+        if (module == null) {
+            LOGGER.warn("Modul {} nicht gefunden", moduleName);
+            return false;
+        }
+
+        if (module.isEnabled()) {
+            LOGGER.warn("Modul {} ist bereits aktiviert", moduleName);
+            return true;
+        }
+
+        module.enable(jda);
+        LOGGER.info("Modul {} aktiviert", moduleName);
+        return true;
+    }
+
+    /**
+     * Deaktiviert ein Modul anhand seines Namens.
+     *
+     * @param moduleName Der Name des zu deaktivierenden Moduls
+     * @return true, wenn das Modul erfolgreich deaktiviert wurde, sonst false
+     */
+    public boolean disableModule(String moduleName) {
+        Module module = modules.get(moduleName.toLowerCase());
+
+        if (module == null) {
+            LOGGER.warn("Modul {} nicht gefunden", moduleName);
+            return false;
+        }
+
+        if (!module.isEnabled()) {
+            LOGGER.warn("Modul {} ist bereits deaktiviert", moduleName);
+            return true;
+        }
+
+        module.disable(jda);
+        LOGGER.info("Modul {} deaktiviert", moduleName);
+        return true;
+    }
+
+    /**
+     * Deaktiviert alle Module.
+     */
+    private void disableAllModules() {
+        for (Module module : modules.values()) {
+            if (module.isEnabled()) {
+                module.disable(jda);
+                LOGGER.info("Modul {} deaktiviert", module.getName());
             }
         }
     }
-    */
 
     /**
-     * Gibt die aktuelle JDA-Instanz zurück
+     * Gibt die JDA-Instanz zurück.
+     *
+     * @return Die JDA-Instanz
      */
-    public static JDA getJda() {
+    public JDA getJda() {
         return jda;
     }
 
     /**
-     * Gibt den CommandManager zurück
+     * Gibt den CommandManager zurück.
+     *
+     * @return Der CommandManager
      */
-    public static CommandManager getCommandManager() {
+    public CommandManager getCommandManager() {
         return commandManager;
+    }
+
+    /**
+     * Gibt eine Liste aller verfügbaren Module zurück.
+     *
+     * @return Eine Liste der Module
+     */
+    public List<Module> getModules() {
+        return new ArrayList<>(modules.values());
+    }
+
+    /**
+     * Prüft, ob der Bot läuft.
+     *
+     * @return true, wenn der Bot läuft, sonst false
+     */
+    public boolean isRunning() {
+        return running;
+    }
+
+    /**
+     * Die Main-Methode zum Starten des Bots.
+     *
+     * @param args Befehlszeilenargumente (nicht verwendet)
+     */
+    public static void main(String[] args) {
+        // Bot starten
+        Bot bot = Bot.getInstance();
+        bot.start();
+
+        // Shutdown-Hook registrieren, um den Bot sauber zu beenden
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Shutdown-Signal empfangen, beende Bot...");
+            bot.stop();
+        }));
+
+        LOGGER.info("Bot-Hauptprogramm gestartet. Drücke Ctrl+C zum Beenden.");
     }
 }
