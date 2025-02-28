@@ -2,7 +2,24 @@
 
 ## 📖 Projektbeschreibung
 
-Adelheit ist ein leistungsfähiger Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwiedergabe und Verwaltung in Discord-Servern zu ermöglichen.
+Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwiedergabe und Verwaltung in Discord-Servern zu ermöglichen.
+
+## 🚧 Pre-Release Hinweis
+**Version: 0.1.0-alpha**
+
+⚠️ **Achtung:** Dies ist eine frühe Alpha-Version. Der Bot kann Fehler enthalten und die Funktionalität ist möglicherweise eingeschränkt.
+
+### Bekannte Einschränkungen
+- Begrenzte Musikwiedergabe-Funktionen
+- Möglicherweise instabile Verbindungen
+- Eingeschränkte Fehlerbehandlung
+- Nur grundlegende Slash-Commands implementiert
+
+## 🆕 Was ist neu in 0.1.0-alpha
+- Grundlegende Musikwiedergabe
+- Lokale und Remote-Playlist-Unterstützung
+- Modulares Bot-Design
+- Erste Slash-Commands implementiert
 
 ## ✨ Funktionen
 
