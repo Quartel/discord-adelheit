@@ -1,0 +1,34 @@
+<configuration>
+    <!-- Konsolen-Appender für Logging in der Kommandozeile -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Datei-Appender für das Speichern von Logs in einer Datei -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/bot.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Tägliche Rotation der Logdateien -->
+            <fileNamePattern>logs/bot.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- Logs für 14 Tage aufbewahren -->
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Konfiguration der Logging-Level -->
+    <!-- JDA-eigene Logs reduzieren (weniger ausführlich) -->
+    <logger name="net.dv8tion.jda" level="INFO"/>
+    <!-- LavaPlayer-Logs reduzieren -->
+    <logger name="com.sedmelluq" level="INFO"/>
+
+    <!-- Root-Logger: Standard-Loglevel für den gesamten Bot -->
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

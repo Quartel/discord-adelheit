@@ -1,0 +1,24 @@
+# Sensible Konfigurationsdateien
+src/main/resources/config.properties
+
+# Logs
+logs/
+*.log
+
+# Kompilierte Dateien
+target/
+bin/
+out/
+build/
+
+# IDE-spezifische Dateien
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Weitere temporäre Dateien
+*.tmp
+*.bak
