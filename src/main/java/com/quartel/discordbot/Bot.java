@@ -2,6 +2,7 @@ package com.quartel.discordbot;
 
 import com.quartel.discordbot.config.Config;
 import com.quartel.discordbot.core.CommandManager;
+import com.quartel.discordbot.core.listeners.GuildJoinListener;
 import com.quartel.discordbot.core.listeners.SlashCommandListener;
 import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.music.MusicModule;
@@ -89,9 +90,12 @@ public class Bot extends ListenerAdapter {
                     .setStatus(OnlineStatus.ONLINE)
                     .setActivity(Activity.playing(Config.getActivity()));
 
-            // Bot erstellen und auf Bereitschaft warten
+// Bot erstellen und auf Bereitschaft warten
             jda = builder.build().awaitReady();
             LOGGER.info("JDA erfolgreich initialisiert");
+
+            // GuildJoinListener für die Registrierung von Commands bei neuen Servern hinzufügen
+            jda.addEventListener(new GuildJoinListener());
 
             // Command-Manager erstellen
             commandManager = new CommandManager(jda);

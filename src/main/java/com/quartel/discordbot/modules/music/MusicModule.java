@@ -4,6 +4,7 @@ import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.music.commands.*;
 import com.quartel.discordbot.modules.music.player.PlayerManager;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -57,21 +58,32 @@ public class MusicModule extends Module {
         // Registriere den Event-Listener
         jda.addEventListener(commandListener);
 
-        // Registriere die Slash-Commands
-        List<CommandData> commands = new ArrayList<>();
-        commands.add(PlayCommand.getCommandData());
-        commands.add(SkipCommand.getCommandData());
-        commands.add(StopCommand.getCommandData());
-        commands.add(QueueCommand.getCommandData());
-        commands.add(NowPlayingCommand.getCommandData());
-        commands.add(VolumeCommand.getCommandData());
-        commands.add(PauseResumeCommand.getPauseCommandData());
-        commands.add(PauseResumeCommand.getResumeCommandData());
+        // Zuerst alle globalen Commands löschen
+        jda.updateCommands().queue(
+                success -> {
+                    LOGGER.info("Globale Commands gelöscht");
 
-        // Globale Commands registrieren
-        jda.updateCommands().addCommands(commands).queue(
-                success -> LOGGER.info("Musik-Befehle erfolgreich registriert"),
-                error -> LOGGER.error("Fehler beim Registrieren der Musik-Befehle: {}", error.getMessage())
+                    // Registriere die Slash-Commands
+                    List<CommandData> commands = new ArrayList<>();
+                    commands.add(PlayCommand.getCommandData());
+                    commands.add(SkipCommand.getCommandData());
+                    commands.add(StopCommand.getCommandData());
+                    commands.add(QueueCommand.getCommandData());
+                    commands.add(NowPlayingCommand.getCommandData());
+                    commands.add(VolumeCommand.getCommandData());
+                    commands.add(PauseResumeCommand.getPauseCommandData());
+                    commands.add(PauseResumeCommand.getResumeCommandData());
+
+                    // Guild-spezifische Commands registrieren für jede Guild
+                    for (Guild guild : jda.getGuilds()) {
+                        guild.updateCommands().addCommands(commands).queue(
+                                guildSuccess -> LOGGER.info("Musik-Befehle erfolgreich für Guild {} registriert", guild.getName()),
+                                guildError -> LOGGER.error("Fehler beim Registrieren der Musik-Befehle für Guild {}: {}",
+                                        guild.getName(), guildError.getMessage())
+                        );
+                    }
+                },
+                error -> LOGGER.error("Fehler beim Löschen globaler Commands: {}", error.getMessage())
         );
     }
 
