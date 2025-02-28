@@ -1,0 +1,16 @@
+{
+  "playlists": [
+    {
+      "name": "chill",
+      "path": "music_library/chill",
+      "description": "Relaxing music collection",
+      "supportedFormats": ["mp3", "wav", "flac"]
+    },
+    {
+      "name": "energetic",
+      "path": "music_library/energetic",
+      "description": "High-energy tracks",
+      "supportedFormats": ["mp3", "wav"]
+    }
+  ]
+}

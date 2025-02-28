@@ -22,3 +22,7 @@ build/
 # Weitere temporäre Dateien
 *.tmp
 *.bak
+
+# Musikbibliothek
+music_library/
+!music_library/.gitkeep
