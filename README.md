@@ -158,12 +158,25 @@ sudo systemctl status adelheit-bot
 - Prüfen Sie Logdateien unter `logs/`
 - Stellen Sie sicher, dass alle Abhängigkeiten installiert sind
 
-## 🤝 Beitragen
-1. Forke das Projekt
-2. Erstelle einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Committe deine Änderungen (`git commit -m 'Add some AmazingFeature'`)
-4. Pushe zum Branch (`git push origin feature/AmazingFeature`)
-5. Öffne einen Pull Request
+## 🌿 Entwicklungsstrategie
+
+### Branch-Struktur
+- `main`: Stabile Produktionsversion
+- `develop`: Integrations-Branch für Entwicklung
+- `feature/*`: Branches für neue Funktionen
+- `release/*`: Branches für Releasevorbereitungen
+
+### Workflow
+1. Neue Features werden in `feature/` Branches entwickelt
+2. Features werden in den `develop` Branch gemerged
+3. Vor einem Release wird ein `release/` Branch erstellt
+4. Stabile Releases werden in `main` gemerged und getaggt
+
+### Beitragen
+- Forke das Projekt
+- Erstelle einen Feature-Branch aus `develop`
+- Committe Änderungen mit aussagekräftigen Nachrichten
+- Erstelle einen Pull Request zum `develop` Branch
 
 ## ⚖️ Lizenz
 Dieses Projekt ist unter der MIT-Lizenz veröffentlicht.
