@@ -93,4 +93,4 @@ Dieses Projekt ist unter der MIT-Lizenz veröffentlicht.
 Bitte melde Fehler über die GitHub Issues-Sektion.
 
 ## 📞 Kontakt
-Projektlink: [Repository-URL]
+Projektlink: https://github.com/Quartel/discord-adelheit
