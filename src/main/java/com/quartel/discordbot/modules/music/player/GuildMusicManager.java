@@ -3,6 +3,11 @@ package com.quartel.discordbot.modules.music.player;
 import com.quartel.discordbot.config.Config;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +21,7 @@ public class GuildMusicManager {
     private final AudioPlayer audioPlayer;
     private final TrackScheduler trackScheduler;
     private final AudioPlayerSendHandler sendHandler;
+    private AudioManager audioManager;
 
     // Timer für automatischen Timeout (in Sekunden)
     private int disconnectTimeout;
@@ -58,6 +64,15 @@ public class GuildMusicManager {
     }
 
     /**
+     * Setzt den AudioManager für diesen Guild.
+     *
+     * @param audioManager Der AudioManager des Guilds
+     */
+    public void setAudioManager(AudioManager audioManager) {
+        this.audioManager = audioManager;
+    }
+
+    /**
      * Gibt den AudioPlayer zurück.
      *
      * @return Der AudioPlayer dieser Guild
@@ -92,24 +107,43 @@ public class GuildMusicManager {
     }
 
     /**
-     * Prüft, ob der Bot inaktiv ist und getrennt werden sollte.
+     * Prüft, ob der Bot getrennt werden sollte.
+     * Der Bot wird getrennt, wenn:
+     * 1. Kein Track spielt ODER
+     * 2. Die konfigurierte Timeout-Zeit überschritten wurde
+     * UND
+     * 3. Keine menschlichen Mitglieder im Sprachkanal sind
      *
-     * @return true, wenn der Bot länger als der konfigurierte Timeout inaktiv ist
+     * @return true, wenn der Bot getrennt werden sollte
      */
     public boolean shouldDisconnect() {
-        if (disconnectTimeout <= 0) {
-            return false; // Timeout deaktiviert
-        }
-
-        // Wenn ein Track abgespielt wird, nicht trennen
-        if (audioPlayer.getPlayingTrack() != null) {
+        // Timeout deaktiviert
+        if (disconnectTimeout <= 0 || audioManager == null) {
             return false;
         }
 
-        long currentTime = System.currentTimeMillis();
-        long inactiveTime = (currentTime - lastActivityTime) / 1000; // in Sekunden
+        // Prüfe den Sprachkanal
+        AudioChannelUnion audioChannel = audioManager.getConnectedChannel();
+        if (audioChannel == null) {
+            return false;
+        }
 
-        return inactiveTime >= disconnectTimeout;
+        // Zähle menschliche Mitglieder im Sprachkanal
+        long humanMembers = audioChannel.asVoiceChannel().getMembers().stream()
+                .filter(member -> !member.getUser().isBot())
+                .count();
+
+        // Wenn keine menschlichen Mitglieder da sind
+        if (humanMembers == 0) {
+            // Prüfe Inaktivitätszeit
+            long currentTime = System.currentTimeMillis();
+            long inactiveTime = (currentTime - lastActivityTime) / 1000; // in Sekunden
+
+            // Zusätzliche Logik: Trenne auch während der Musikwiedergabe
+            return inactiveTime >= disconnectTimeout;
+        }
+
+        return false;
     }
 
     /**

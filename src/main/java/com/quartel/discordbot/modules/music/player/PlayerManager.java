@@ -88,6 +88,9 @@ public class PlayerManager {
             musicManager = new GuildMusicManager(audioPlayerManager);
             musicManagers.put(guildId, musicManager);
 
+            // Setze den AudioManager
+            musicManager.setAudioManager(guild.getAudioManager());
+
             // Verbinde den AudioSendHandler mit dem Guild
             guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
             LOGGER.debug("Neuer GuildMusicManager für Server {} erstellt", guild.getName());
