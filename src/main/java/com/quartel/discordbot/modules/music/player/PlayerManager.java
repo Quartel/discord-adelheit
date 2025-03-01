@@ -5,6 +5,11 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -49,8 +54,22 @@ public class PlayerManager {
         this.audioPlayerManager = new DefaultAudioPlayerManager();
         this.scheduler = Executors.newScheduledThreadPool(1);
 
-        // Registriere alle Quellen, von denen Musik geladen werden kann
-        AudioSourceManagers.registerRemoteSources(audioPlayerManager);
+        // SoundCloud unterstützen
+        audioPlayerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+
+        // Bandcamp unterstützen
+        audioPlayerManager.registerSourceManager(new BandcampAudioSourceManager());
+
+        // Twitch-Streams unterstützen
+        audioPlayerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
+
+        // Vimeo unterstützen
+        audioPlayerManager.registerSourceManager(new VimeoAudioSourceManager());
+
+        // Allgemeine HTTP-Quellen unterstützen (für direktes Streamen von URLs)
+        audioPlayerManager.registerSourceManager(new HttpAudioSourceManager());
+
+        // Lokale Dateien unterstützen
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
 
         // Starte einen Timer, der inaktive Verbindungen überprüft
