@@ -101,10 +101,11 @@ public class PlayCommand {
         // Extrahiere den Song-Parameter aus dem Befehl
         String song = event.getOption("song").getAsString();
 
-        // Wenn es keine vollständige URL ist, behandle es als YouTube-Suche
+
+        // Prüfen, ob es eine URL ist, da direkte Suche nicht mehr unterstützt wird
         if (!isUrl(song)) {
-            song = "ytsearch:" + song;
-            LOGGER.debug("Suche nach: {}", song);
+            event.reply("❌ Bitte gib eine direkte URL ein. Die Suchfunktion wird momentan nicht unterstützt.").setEphemeral(true).queue();
+            return;
         }
 
         // Lade und spiele den Track
