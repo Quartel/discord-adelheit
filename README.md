@@ -5,30 +5,32 @@
 Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwiedergabe und Verwaltung in Discord-Servern zu ermöglichen.
 
 ## 🚧 Pre-Release Hinweis
-**Version: 0.1.0-alpha**
+**Version: 0.2.0-alpha**
 
 ⚠️ **Achtung:** Dies ist eine frühe Alpha-Version. Der Bot kann Fehler enthalten und die Funktionalität ist möglicherweise eingeschränkt.
 
 ### Bekannte Einschränkungen
-- Begrenzte Musikwiedergabe-Funktionen
-- Möglicherweise instabile Verbindungen
-- Eingeschränkte Fehlerbehandlung
-- Nur grundlegende Slash-Commands implementiert
+- Begrenzte Fehlerbehandlung bei Netzwerkproblemen
+- Fehlende GUI für Konfigurationsänderungen
+- Keine Unterstützung für Spotify-Links
 
-## 🆕 Was ist neu in 0.1.0-alpha
-- Grundlegende Musikwiedergabe
-- Lokale und Remote-Playlist-Unterstützung
-- Modulares Bot-Design
-- Erste Slash-Commands implementiert
+## 🆕 Was ist neu in 0.2.0-alpha
+- Implementiertes Berechtigungssystem für Befehle
+- Verbesserte Fehlerbehandlung bei der Musikwiedergabe
+- Unterstützung für Auto-Vervollständigung bei Playlist-Befehlen
+- Optimierte Audioverbindungen
+- Erweiterte Logging-Funktionalität
 
 ## ✨ Funktionen
 
-- 🎵 Musik von YouTube, SoundCloud und lokalen Bibliotheken abspielen
+- 🎵 Musik von SoundCloud und lokalen Bibliotheken abspielen
 - ⏭️ Tracks überspringen
 - ⏸️ Wiedergabe pausieren und fortsetzen
 - 🔊 Lautstärke anpassen
 - 📋 Warteschlange verwalten
 - 🎼 Lokale Playlists abspielen und durchsuchen
+- 🔄 Automatisches Trennen der Verbindung bei Inaktivität
+- 📊 Ausführliche Statusinformationen zum aktuellen Track
 
 ## 🛠️ Technische Details
 
@@ -145,20 +147,46 @@ sudo systemctl status adelheit-bot
 
 ### Musik-Befehle
 - `/play [song/playlist]`: Musik abspielen
+    - Unterstützt YouTube/SoundCloud URLs und Suchbegriffe
+    - Mit Playlist-Autocompletion für lokale Musik
 - `/skip`: Aktuellen Track überspringen
-- `/stop`: Wiedergabe stoppen
+- `/stop`: Wiedergabe stoppen und Warteschlange leeren
 - `/queue`: Aktuelle Warteschlange anzeigen
-- `/nowplaying`: Aktuellen Track anzeigen
-- `/volume [level]`: Lautstärke anpassen
+- `/nowplaying`: Aktuellen Track mit Fortschrittsanzeige anzeigen
+- `/volume [level]`: Lautstärke anpassen (0-100)
 - `/pause`: Wiedergabe pausieren
 - `/resume`: Wiedergabe fortsetzen
+- `/play preview:[playlist]`: Vorschau der Tracks in einer Playlist anzeigen
+
+## 📂 Lokale Playlists einrichten
+
+Um lokale Playlists zu verwenden:
+
+1. Erstelle einen Ordner im `music_library/` Verzeichnis für jede Playlist
+2. Platziere unterstützte Audiodateien (mp3, wav, flac) in diesen Ordnern
+3. Bearbeite die `music_library.json` Datei, um neue Playlists zu registrieren:
+   ```json
+   {
+     "playlists": [
+       {
+         "name": "playlist-name",
+         "path": "music_library/playlist-ordner",
+         "description": "Beschreibung der Playlist"
+       }
+     ]
+   }
+   ```
 
 ## 🚧 Troubleshooting
 - Überprüfen Sie, ob der Bot-Token korrekt ist
-- Prüfen Sie Logdateien unter `logs/`
+- Prüfen Sie Logdateien unter `logs/bot.log`
 - Stellen Sie sicher, dass alle Abhängigkeiten installiert sind
+- Bei Verbindungsproblemen prüfen Sie die Firewall-Einstellungen
 
 ## 🌿 Entwicklungsstrategie
+
+### Roadmap
+[Entwicklungs-Roadmap](.github/ROADMAP.md)
 
 ### Branch-Struktur
 - `main`: Stabile Produktionsversion
