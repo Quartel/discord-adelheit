@@ -32,7 +32,7 @@ public class PlayCommand {
      */
     public static CommandData getCommandData() {
         // Option für Soundcloud/YouTube
-        OptionData songOption = new OptionData(OptionType.STRING, "song", "Ein Lied-URL oder Suchbegriff", false);
+        OptionData songOption = new OptionData(OptionType.STRING, "song", "URL zu einem Song (Soundcloud, Bandcamp, Twitch, Vimeo)", false);
 
         // Option für lokale Playlist
         OptionData playlistOption = new OptionData(OptionType.STRING, "playlist", "Name einer lokalen Playlist", false)
