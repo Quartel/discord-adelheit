@@ -15,10 +15,10 @@
 - Optimiertes Logging für verbesserte Fehleranalyse
 - Verbesserte Reaktionszeiten bei Slash-Commands
 - Verbesserte Benutzerfreundlichkeit bei Fehlermeldungen
+- Youtube Unterstützung entfernt
 
 ### Fixed
 - Problem mit dem automatischen Trennen bei längeren Tracks
-- Fehler beim Laden bestimmter YouTube-Playlists
 - Verbesserte Stabilität bei Verbindungsabbrüchen
 
 ## [0.1.0-alpha] - 2025-02-28
