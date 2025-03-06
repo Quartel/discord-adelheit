@@ -157,7 +157,7 @@ public class MusicUtil {
                 .addField("Lautstärke", musicManager.getVolume() + "%", true)
                 .addField("Fortschritt", progressBar.toString(), false)
                 .setColor(Color.GREEN)
-                .setThumbnail(getYouTubeThumbnail(info.uri))
+                .setThumbnail(getMusicThumbnail(info.uri))
                 .setFooter("Angefordert von " + guild.getSelfMember().getUser().getName(), guild.getSelfMember().getUser().getAvatarUrl())
                 .build();
     }
@@ -244,20 +244,15 @@ public class MusicUtil {
     }
 
     /**
-     * Holt die Thumbnail-URL für ein YouTube-Video.
+     * Holt die Thumbnail-URL für eine Musikquelle.
+     * Gibt standardmäßig ein generisches Musiksymbol zurück, da die direkte Thumbnail-Extraktion
+     * für bestimmte Quellen nicht mehr unterstützt wird.
      *
-     * @param videoUrl Die URL des YouTube-Videos
-     * @return Die URL des Thumbnails oder ein Standardbild
+     * @param sourceUrl Die URL der Musikquelle
+     * @return Die URL eines Standard-Musiksymbols
      */
-    private static String getYouTubeThumbnail(String videoUrl) {
-        if (videoUrl != null && videoUrl.contains("youtube.com/watch?v=")) {
-            String videoId = videoUrl.split("v=")[1];
-            if (videoId.contains("&")) {
-                videoId = videoId.split("&")[0];
-            }
-            return "https://img.youtube.com/vi/" + videoId + "/mqdefault.jpg";
-        }
-
-        return "https://i.imgur.com/HQoJfpG.png"; // Standard-Musiksymbol
+    private static String getMusicThumbnail(String sourceUrl) {
+        // Verwende immer das Standard-Musiksymbol
+        return "https://i.imgur.com/HQoJfpG.png";
     }
 }

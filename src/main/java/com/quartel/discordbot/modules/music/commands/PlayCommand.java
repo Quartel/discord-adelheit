@@ -32,7 +32,7 @@ public class PlayCommand {
      */
     public static CommandData getCommandData() {
         // Option für Soundcloud/YouTube
-        OptionData songOption = new OptionData(OptionType.STRING, "song", "Ein Lied-URL oder Suchbegriff", false);
+        OptionData songOption = new OptionData(OptionType.STRING, "song", "URL zu einem Song (Soundcloud, Bandcamp, Twitch, Vimeo)", false);
 
         // Option für lokale Playlist
         OptionData playlistOption = new OptionData(OptionType.STRING, "playlist", "Name einer lokalen Playlist", false)
@@ -101,10 +101,11 @@ public class PlayCommand {
         // Extrahiere den Song-Parameter aus dem Befehl
         String song = event.getOption("song").getAsString();
 
-        // Wenn es keine vollständige URL ist, behandle es als YouTube-Suche
+
+        // Prüfen, ob es eine URL ist, da direkte Suche nicht mehr unterstützt wird
         if (!isUrl(song)) {
-            song = "ytsearch:" + song;
-            LOGGER.debug("Suche nach: {}", song);
+            event.reply("❌ Bitte gib eine direkte URL ein. Die Suchfunktion wird momentan nicht unterstützt.").setEphemeral(true).queue();
+            return;
         }
 
         // Lade und spiele den Track

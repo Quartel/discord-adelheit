@@ -22,20 +22,30 @@ public class GuildJoinListener extends ListenerAdapter {
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
         LOGGER.info("Bot ist Server beigetreten: {}", event.getGuild().getName());
 
-        // Registriere die Slash-Commands auf dem neuen Server
-        List<CommandData> commands = new ArrayList<>();
-        commands.add(PlayCommand.getCommandData());
-        commands.add(SkipCommand.getCommandData());
-        commands.add(StopCommand.getCommandData());
-        commands.add(QueueCommand.getCommandData());
-        commands.add(NowPlayingCommand.getCommandData());
-        commands.add(VolumeCommand.getCommandData());
-        commands.add(PauseResumeCommand.getPauseCommandData());
-        commands.add(PauseResumeCommand.getResumeCommandData());
+        // Zuerst bestehende Befehle löschen, um Duplikate zu vermeiden
+        event.getGuild().updateCommands().queue(
+                success -> {
+                    LOGGER.info("Bestehende Befehle für neuen Server {} gelöscht", event.getGuild().getName());
 
-        event.getGuild().updateCommands().addCommands(commands).queue(
-                success -> LOGGER.info("Musik-Befehle erfolgreich für neuen Server {} registriert", event.getGuild().getName()),
-                error -> LOGGER.error("Fehler beim Registrieren der Musik-Befehle für neuen Server {}: {}",
+                    // Erstelle Liste der zu registrierenden Befehle
+                    List<CommandData> commands = new ArrayList<>();
+                    commands.add(PlayCommand.getCommandData());
+                    commands.add(SkipCommand.getCommandData());
+                    commands.add(StopCommand.getCommandData());
+                    commands.add(QueueCommand.getCommandData());
+                    commands.add(NowPlayingCommand.getCommandData());
+                    commands.add(VolumeCommand.getCommandData());
+                    commands.add(PauseResumeCommand.getPauseCommandData());
+                    commands.add(PauseResumeCommand.getResumeCommandData());
+
+                    // Jetzt neue Befehle registrieren
+                    event.getGuild().updateCommands().addCommands(commands).queue(
+                            registerSuccess -> LOGGER.info("Musik-Befehle erfolgreich für neuen Server {} registriert", event.getGuild().getName()),
+                            registerError -> LOGGER.error("Fehler beim Registrieren der Musik-Befehle für neuen Server {}: {}",
+                                    event.getGuild().getName(), registerError.getMessage())
+                    );
+                },
+                error -> LOGGER.error("Fehler beim Löschen bestehender Befehle für neuen Server {}: {}",
                         event.getGuild().getName(), error.getMessage())
         );
     }
