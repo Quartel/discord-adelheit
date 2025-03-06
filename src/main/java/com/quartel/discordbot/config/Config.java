@@ -13,7 +13,7 @@ import java.util.Properties;
 
 /**
  * Diese Klasse verwaltet die Konfiguration des Bots.
- * Sie lädt die Einstellungen aus der config.properties-Datei.
+ * Sie lädt die Einstellungen aus der config.properties-Datei, die an verschiedenen Orten gesucht wird.
  */
 public class Config {
     private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
@@ -24,55 +24,117 @@ public class Config {
 
     /**
      * Lädt die Konfigurationsdatei beim ersten Zugriff.
+     * Sucht die Datei in dieser Reihenfolge:
+     * 1. Im aktuellen Arbeitsverzeichnis
+     * 2. Im Unterverzeichnis "config"
+     * 3. Im .adelheit Verzeichnis im Benutzerverzeichnis
+     * 4. In den Ressourcen (eingebettet in die JAR)
      */
     private static void loadConfig() {
         if (isLoaded) {
             return;
         }
 
+        // Versuch 1: Im aktuellen Arbeitsverzeichnis
         Path configPath = Paths.get(CONFIG_FILE);
+        boolean configFound = tryLoadConfig(configPath);
 
-        // Versuche verschiedene Pfade
-        if (!Files.exists(configPath)) {
-            // Versuche im Ressourcenverzeichnis
-            configPath = Paths.get("src/main/resources/" + CONFIG_FILE);
+        // Versuch 2: Im config Unterverzeichnis
+        if (!configFound) {
+            configPath = Paths.get("config", CONFIG_FILE);
+            configFound = tryLoadConfig(configPath);
         }
 
-        if (!Files.exists(configPath)) {
-            // Versuche im Benutzerverzeichnis
+        // Versuch 3: Im Benutzerverzeichnis unter .adelheit
+        if (!configFound) {
             configPath = Paths.get(System.getProperty("user.home"), ".adelheit", CONFIG_FILE);
+            configFound = tryLoadConfig(configPath);
         }
 
-        // Wenn Konfigurationsdatei nicht existiert, kopiere Beispieldatei
-        if (!Files.exists(configPath)) {
-            try {
-                // Stelle sicher, dass das Verzeichnis existiert
-                Files.createDirectories(configPath.getParent());
+        // Versuch 4: In resources (eingebettet in die JAR)
+        if (!configFound) {
+            try (InputStream resourceStream = Config.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+                if (resourceStream != null) {
+                    properties.load(resourceStream);
+                    isLoaded = true;
+                    LOGGER.info("Konfiguration aus eingebetteter Ressource geladen");
 
-                // Kopiere Beispieldatei
-                Path examplePath = Paths.get("src/main/resources/" + CONFIG_EXAMPLE_FILE);
-                if (Files.exists(examplePath)) {
-                    LOGGER.info("Konfigurationsdatei nicht gefunden. Erstelle aus Beispieldatei...");
-                    Files.copy(examplePath, configPath, StandardCopyOption.REPLACE_EXISTING);
-                    LOGGER.info("Beispielkonfiguration nach {} kopiert. Bitte konfiguriere die Datei.", configPath);
-                } else {
-                    LOGGER.error("Weder Konfigurationsdatei noch Beispieldatei gefunden!");
+                    // Wir kopieren die eingebettete Konfiguration ins Arbeitsverzeichnis für zukünftige Bearbeitungen
+                    extractConfigExample();
+
                     return;
                 }
             } catch (IOException e) {
-                LOGGER.error("Fehler beim Erstellen der Konfigurationsdatei", e);
-                return;
+                LOGGER.error("Fehler beim Laden der eingebetteten Konfiguration", e);
             }
         }
 
-        // Lade die Eigenschaften aus der Datei
-        try (InputStream input = Files.newInputStream(configPath)) {
-            properties.load(input);
-            isLoaded = true;
-            LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath);
-        } catch (IOException e) {
-            LOGGER.error("Fehler beim Laden der Konfigurationsdatei", e);
+        // Wenn immer noch keine Konfiguration geladen wurde, extrahieren wir die Beispielkonfiguration
+        if (!isLoaded) {
+            LOGGER.warn("Keine Konfigurationsdatei gefunden. Erstelle Beispielkonfiguration...");
+
+            if (extractConfigExample()) {
+                // Versuche nochmals zu laden
+                configPath = Paths.get(CONFIG_FILE);
+                configFound = tryLoadConfig(configPath);
+
+                if (configFound) {
+                    LOGGER.info("Beispielkonfiguration wurde erstellt und geladen");
+                    LOGGER.warn("Bitte bearbeite die Datei {} und starte den Bot neu", configPath.toAbsolutePath());
+
+                    // Token setzen, um sicherzustellen, dass Benutzer weiß, dass er es ändern muss
+                    properties.setProperty("bot.token", "BITTE_HIER_DEIN_BOT_TOKEN_EINFÜGEN");
+                } else {
+                    LOGGER.error("Konnte die Beispielkonfiguration nicht laden");
+                }
+            }
         }
+    }
+
+    /**
+     * Versucht, die Konfiguration aus dem angegebenen Pfad zu laden.
+     *
+     * @param configPath Pfad zur Konfigurationsdatei
+     * @return true, wenn die Konfiguration erfolgreich geladen wurde
+     */
+    private static boolean tryLoadConfig(Path configPath) {
+        if (Files.exists(configPath)) {
+            try (InputStream input = Files.newInputStream(configPath)) {
+                properties.load(input);
+                isLoaded = true;
+                LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath.toAbsolutePath());
+                return true;
+            } catch (IOException e) {
+                LOGGER.error("Fehler beim Laden der Konfigurationsdatei von {}", configPath, e);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Extrahiert die Beispielkonfiguration aus den Ressourcen ins aktuelle Verzeichnis.
+     *
+     * @return true, wenn die Extraktion erfolgreich war
+     */
+    private static boolean extractConfigExample() {
+        try (InputStream exampleStream = Config.class.getClassLoader().getResourceAsStream(CONFIG_EXAMPLE_FILE)) {
+            if (exampleStream != null) {
+                Path configDir = Paths.get("config");
+                if (!Files.exists(configDir)) {
+                    Files.createDirectories(configDir);
+                }
+
+                Path examplePath = configDir.resolve(CONFIG_FILE);
+                Files.copy(exampleStream, examplePath, StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.info("Beispielkonfiguration nach {} extrahiert", examplePath.toAbsolutePath());
+                return true;
+            } else {
+                LOGGER.error("Beispielkonfigurationsdatei nicht gefunden in den Ressourcen");
+            }
+        } catch (IOException e) {
+            LOGGER.error("Fehler beim Extrahieren der Beispielkonfiguration", e);
+        }
+        return false;
     }
 
     /**
@@ -97,6 +159,38 @@ public class Config {
     public static String getProperty(String key, String defaultValue) {
         loadConfig();
         return properties.getProperty(key, defaultValue);
+    }
+
+    /**
+     * Aktualisiert eine Eigenschaft und speichert sie in der Konfigurationsdatei.
+     *
+     * @param key Der Schlüssel der Eigenschaft
+     * @param value Der neue Wert der Eigenschaft
+     * @return true, wenn die Aktualisierung erfolgreich war
+     */
+    public static boolean updateProperty(String key, String value) {
+        loadConfig();
+        properties.setProperty(key, value);
+
+        // Bestimme den Pfad zum Speichern
+        Path configPath = Paths.get("config", CONFIG_FILE);
+        if (!Files.exists(configPath.getParent())) {
+            try {
+                Files.createDirectories(configPath.getParent());
+            } catch (IOException e) {
+                LOGGER.error("Fehler beim Erstellen des Konfigurationsverzeichnisses", e);
+                return false;
+            }
+        }
+
+        try {
+            properties.store(Files.newOutputStream(configPath), "Konfiguration für Adelheit Discord Bot");
+            LOGGER.info("Konfiguration aktualisiert und in {} gespeichert", configPath);
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("Fehler beim Speichern der aktualisierten Konfiguration", e);
+            return false;
+        }
     }
 
     /**
@@ -198,7 +292,7 @@ public class Config {
      * @return Die maximale Lautstärke
      */
     public static int getMaxVolume() {
-        return Integer.parseInt(getProperty("bot.max_volume", "200"));
+        return Integer.parseInt(getProperty("music.max_volume", "200"));
     }
 
     /**
