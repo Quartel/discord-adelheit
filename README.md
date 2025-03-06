@@ -185,6 +185,9 @@ Um lokale Playlists zu verwenden:
 
 ## 🌿 Entwicklungsstrategie
 
+### Roadmap
+[Entwicklungs-Roadmap](.github/ROADMAP.md)
+
 ### Branch-Struktur
 - `main`: Stabile Produktionsversion
 - `develop`: Integrations-Branch für Entwicklung
