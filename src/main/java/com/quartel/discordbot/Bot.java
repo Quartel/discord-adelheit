@@ -6,6 +6,7 @@ import com.quartel.discordbot.core.listeners.GuildJoinListener;
 import com.quartel.discordbot.core.listeners.SlashCommandListener;
 import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.music.MusicModule;
+import com.quartel.discordbot.util.CommandCleaner;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -34,6 +35,11 @@ public class Bot extends ListenerAdapter {
     private CommandManager commandManager;
     private final Map<String, Module> modules = new HashMap<>();
     private boolean running = false;
+
+    // Flag zum Aktivieren des Bereinigungsmodus beim Start
+    // Dies sollte auf true gesetzt werden, wenn doppelte Befehle auftreten,
+    // und dann wieder auf false, nachdem der Bot einmal gestartet wurde
+    private static final boolean CLEAN_COMMANDS_ON_START = false;
 
     /**
      * Privater Konstruktor für Singleton-Muster.
@@ -90,10 +96,35 @@ public class Bot extends ListenerAdapter {
                     .setStatus(OnlineStatus.ONLINE)
                     .setActivity(Activity.playing(Config.getActivity()));
 
-// Bot erstellen und auf Bereitschaft warten
+            // Bot erstellen und auf Bereitschaft warten
             jda = builder.build().awaitReady();
             LOGGER.info("JDA erfolgreich initialisiert");
 
+            if (CLEAN_COMMANDS_ON_START) {
+                // Führe zuerst eine vollständige Bereinigung aller Befehle durch
+                LOGGER.info("Bereinigungsmodus aktiv: Lösche alle bestehenden Befehle vor der Neuregistrierung...");
+
+                CommandCleaner.cleanAllCommands(jda, () -> {
+                    // Dieser Code wird ausgeführt, nachdem alle Befehle gelöscht wurden
+                    LOGGER.info("Befehlsbereinigung abgeschlossen, führe normale Startsequenz fort...");
+                    completeStartup();
+                });
+            } else {
+                // Normaler Start ohne Bereinigung
+                completeStartup();
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Fehler beim Starten des Bots", e);
+        }
+    }
+
+    /**
+     * Führt die eigentliche Startsequenz des Bots aus.
+     * Wird nach der optionalen Befehlsbereinigung aufgerufen.
+     */
+    private void completeStartup() {
+        try {
             // GuildJoinListener für die Registrierung von Commands bei neuen Servern hinzufügen
             jda.addEventListener(new GuildJoinListener());
 
@@ -110,9 +141,8 @@ public class Bot extends ListenerAdapter {
 
             running = true;
             LOGGER.info("Bot erfolgreich gestartet!");
-
         } catch (Exception e) {
-            LOGGER.error("Fehler beim Starten des Bots", e);
+            LOGGER.error("Fehler beim Abschließen des Bot-Starts", e);
         }
     }
 
