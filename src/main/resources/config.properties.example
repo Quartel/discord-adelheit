@@ -20,3 +20,8 @@ music.permissions.nowplaying=EVERYONE
 music.permissions.volume=DJ_ROLE
 music.permissions.pause=DJ_ROLE
 music.permissions.resume=DJ_ROLE
+
+# Warteraum-Konfiguration
+warteraum.channel_id=YOUR_CHANNEL_ID_HERE
+warteraum.auto_leave_timeout=60
+warteraum.default_playlist=chill

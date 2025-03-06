@@ -209,4 +209,31 @@ public class Config {
     public static String getLoggingLevel() {
         return getProperty("logging.level", "INFO");
     }
+
+    /**
+     * Gibt die Warteraum-Channel-ID zurück.
+     *
+     * @return Die Channel-ID des Warteraums oder null, wenn nicht konfiguriert
+     */
+    public static String getWaitingRoomChannelId() {
+        return getProperty("warteraum.channel_id");
+    }
+
+    /**
+     * Gibt den Warteraum-Timeout zurück.
+     *
+     * @return Der Timeout in Sekunden
+     */
+    public static int getWaitingRoomTimeout() {
+        return Integer.parseInt(getProperty("warteraum.auto_leave_timeout", "60"));
+    }
+
+    /**
+     * Gibt die Standard-Playlist für den Warteraum zurück.
+     *
+     * @return Der Name der Standard-Playlist
+     */
+    public static String getWaitingRoomDefaultPlaylist() {
+        return getProperty("warteraum.default_playlist", "chill");
+    }
 }
