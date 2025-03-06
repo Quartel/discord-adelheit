@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0-alpha] - Geplant
+## [0.2.0-alpha] - 2025-03-06
 
 ### Added
 - Berechtigungssystem für Befehle und Benutzerrollen

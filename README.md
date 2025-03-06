@@ -106,7 +106,7 @@ mvn clean package
 #### 7. Bot starten
 ```bash
 # Direkter Start
-java -jar target/discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/discord-adelheit-0.2.0-alpha-jar-with-dependencies.jar
 ```
 
 ### Produktivbetrieb mit Systemd
