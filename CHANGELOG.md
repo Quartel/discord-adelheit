@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0-alpha] - 2025-03-07
+
+### Added
+- Warteraummusik-Modus mit automatischer Aktivierung/Deaktivierung
+  - Neuer Befehl `/warteraum aktivieren` zum Starten des Warteraummodus
+  - Neuer Befehl `/warteraum deaktivieren` zum Beenden des Warteraummodus
+  - Automatisches Abspielen von Musik, wenn Benutzer den Warteraum betreten
+  - Automatisches Verlassen und Monitoring, wenn keine Benutzer mehr anwesend sind
+- Benutzerfreundliche Startskripte für einfache Installation
+  - Windows-Unterstützung über `start-bot.bat`
+  - Linux-Unterstützung über `start-bot.sh`
+  - Automatische Konfigurationserstellung beim ersten Start
+  - Verbesserte Fehlermeldungen und Benutzerführung
+
+### Fixed
+- Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen
+- Optimierte Ressourcennutzung während Inaktivitätsperioden
+
 ## [0.2.0-alpha] - 2025-03-06
 
 ### Added
