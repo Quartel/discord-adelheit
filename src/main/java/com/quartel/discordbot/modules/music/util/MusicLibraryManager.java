@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,8 +20,14 @@ import java.util.stream.Collectors;
  */
 public class MusicLibraryManager {
     private static final Logger logger = LoggerFactory.getLogger(MusicLibraryManager.class);
-    private static final String MUSIC_LIBRARY_CONFIG = "src/main/resources/music_library.json";
-    private static final String MUSIC_LIBRARY_PATH = "music_library";
+
+    // Korrigierte Pfade für die Konfigurationsdatei
+    private static final String[] POSSIBLE_CONFIG_PATHS = {
+            "config/music_library.json",                    // Relativer Pfad im Hauptverzeichnis
+            "music_library.json",                           // Direkt im Hauptverzeichnis
+            "src/main/resources/music_library.json"         // Entwicklungspfad (für IDE)
+    };
+
     private static final String[] SUPPORTED_AUDIO_FORMATS = {"mp3", "wav", "flac"};
 
     /**
@@ -28,12 +35,21 @@ public class MusicLibraryManager {
      * @return JsonObject mit Playlist-Konfigurationen
      */
     public JsonObject loadMusicLibraryConfig() {
-        try (FileReader reader = new FileReader(MUSIC_LIBRARY_CONFIG)) {
-            return new Gson().fromJson(reader, JsonObject.class);
-        } catch (IOException e) {
-            logger.error("Fehler beim Laden der Musikbibliotheks-Konfiguration", e);
-            return null;
+        // Versuche jede mögliche Konfigurationsdatei zu laden
+        for (String configPath : POSSIBLE_CONFIG_PATHS) {
+            File configFile = new File(configPath);
+            if (configFile.exists() && configFile.isFile()) {
+                try (FileReader reader = new FileReader(configFile)) {
+                    logger.info("Lade Musikbibliothek-Konfiguration aus: {}", configFile.getAbsolutePath());
+                    return new Gson().fromJson(reader, JsonObject.class);
+                } catch (IOException e) {
+                    logger.error("Fehler beim Laden der Musikbibliotheks-Konfiguration von {}", configPath, e);
+                }
+            }
         }
+
+        logger.error("Keine gültige Musikbibliotheks-Konfiguration gefunden!");
+        return null;
     }
 
     /**
@@ -59,12 +75,23 @@ public class MusicLibraryManager {
             return new ArrayList<>();
         }
 
+        // Überprüfe, ob der Pfad existiert
+        File playlistDir = new File(playlistPath);
+        if (!playlistDir.exists() || !playlistDir.isDirectory()) {
+            logger.error("Playlist-Verzeichnis existiert nicht: {}", playlistDir.getAbsolutePath());
+            return new ArrayList<>();
+        }
+
         try {
-            return Files.walk(Paths.get(playlistPath))
+            logger.info("Suche nach Audiodateien in: {}", playlistDir.getAbsolutePath());
+            List<String> files = Files.walk(Paths.get(playlistPath))
                     .filter(Files::isRegularFile)
                     .map(Path::toString)
                     .filter(this::isSupportedAudioFile)
                     .collect(Collectors.toList());
+
+            logger.info("Gefunden: {} Audiodateien in Playlist {}", files.size(), playlistName);
+            return files;
         } catch (IOException e) {
             logger.error("Fehler beim Durchsuchen der Playlist {}", playlistName, e);
             return new ArrayList<>();
