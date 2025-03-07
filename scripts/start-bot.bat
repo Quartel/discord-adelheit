@@ -103,7 +103,7 @@ echo.
 echo Die Log-Datei findest du unter logs\bot.log
 echo.
 
-java -Xms128m -Xmx256m -jar discord-adelheit-1.0-SNAPSHOT.jar
+java -Xms128m -Xmx256m -jar discord-adelheit-0.3.0-alpha.jar
 
 :: Wenn der Bot unerwartet beendet wurde
 echo.
