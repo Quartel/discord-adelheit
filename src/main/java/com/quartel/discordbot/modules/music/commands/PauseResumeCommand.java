@@ -3,6 +3,7 @@ package com.quartel.discordbot.modules.music.commands;
 import com.quartel.discordbot.modules.music.player.GuildMusicManager;
 import com.quartel.discordbot.modules.music.player.PlayerManager;
 import com.quartel.discordbot.modules.music.util.MusicUtil;
+import com.quartel.discordbot.modules.music.util.WaitingRoomManager;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
@@ -49,6 +50,13 @@ public class PauseResumeCommand {
             return;
         }
 
+        // Prüfe, ob der Warteraum-Modus aktiv ist
+        if (WaitingRoomManager.getInstance().isWaitingRoomActive(guild.getIdLong())) {
+            event.reply("❌ Der `/pause` Befehl ist während des Warteraum-Modus deaktiviert. " +
+                    "Verwende `/warteraum deaktivieren`, um den Warteraum-Modus zu beenden.").setEphemeral(true).queue();
+            return;
+        }
+
         // Prüfe, ob der Benutzer im gleichen Sprachkanal ist
         if (!MusicUtil.isInSameVoiceChannel(event)) {
             return;
@@ -88,6 +96,13 @@ public class PauseResumeCommand {
         Guild guild = event.getGuild();
         if (guild == null) {
             event.reply("Dieser Befehl kann nur auf einem Server verwendet werden.").setEphemeral(true).queue();
+            return;
+        }
+
+        // Prüfe, ob der Warteraum-Modus aktiv ist
+        if (WaitingRoomManager.getInstance().isWaitingRoomActive(guild.getIdLong())) {
+            event.reply("❌ Der `/resume` Befehl ist während des Warteraum-Modus deaktiviert. " +
+                    "Verwende `/warteraum deaktivieren`, um den Warteraum-Modus zu beenden.").setEphemeral(true).queue();
             return;
         }
 
