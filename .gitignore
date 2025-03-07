@@ -24,6 +24,15 @@ build/
 *.tmp
 *.bak
 
-# Musikbibliothek
-music_library/
-!music_library/.gitkeep
+# Musikbibliothek - nur Audiodateien ausschließen, Struktur beibehalten
+music_library/**/*.mp3
+music_library/**/*.wav
+music_library/**/*.flac
+music_library/**/*.ogg
+music_library/**/*.m4a
+music_library/**/*.aac
+
+# Sicherstellen, dass die Ordnerstruktur und README-Dateien eingeschlossen werden
+!music_library/
+!music_library/*/
+!music_library/*/README.txt
