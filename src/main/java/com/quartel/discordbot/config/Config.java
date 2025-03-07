@@ -65,7 +65,7 @@ public class Config {
                         isLoaded = true;
 
                         // Aktualisiere die Konfiguration mit neuen Optionen
-                        migrateConfig();
+                        checkMissingProperties();
 
                         break;
                     } else {
@@ -119,10 +119,13 @@ public class Config {
     }
 
     /**
+     * ACHTUNG: Diese Methode nur manuell aufrufen, wenn alle fehlenden Eigenschaften
+     * zur Konfigurationsdatei hinzugefügt werden sollen. Dies überschreibt das Dateiformat.
+     *
      * Aktualisiert eine bestehende Konfigurationsdatei mit neuen Standardwerten.
      * Bestehende Werte werden nicht überschrieben.
      */
-    private static void migrateConfig() {
+    public static void applyMissingProperties() {
         if (loadedConfigPath == null || loadedConfigPath.equals(Paths.get("EMBEDDED_RESOURCE"))) {
             return; // Keine Migration nötig, wenn keine Datei geladen wurde
         }
@@ -154,6 +157,45 @@ public class Config {
             } catch (IOException e) {
                 LOGGER.error("Fehler beim Speichern der migrierten Konfiguration", e);
             }
+        } else {
+            LOGGER.debug("Keine fehlenden Konfigurationsoptionen gefunden");
+        }
+    }
+
+    /**
+     * Überprüft, ob in der aktuellen Konfiguration Eigenschaften fehlen und loggt diese.
+     * Fehlende Eigenschaften werden nur protokolliert, aber nicht automatisch hinzugefügt.
+     */
+    private static void checkMissingProperties() {
+        if (loadedConfigPath == null || loadedConfigPath.equals(Paths.get("EMBEDDED_RESOURCE"))) {
+            return; // Keine Überprüfung möglich, wenn keine Datei geladen wurde
+        }
+
+        LOGGER.debug("Prüfe auf fehlende Konfigurationsoptionen...");
+
+        // Sammle alle fehlenden Eigenschaften
+        List<String> missingProperties = new ArrayList<>();
+
+        // Prüfe auf fehlende Optionen basierend auf den registrierten Standardwerten
+        for (Map.Entry<String, String> entry : DefaultConfigManager.getAllDefaults().entrySet()) {
+            String key = entry.getKey();
+            String defaultValue = entry.getValue();
+
+            if (!properties.containsKey(key)) {
+                // Eigenschaft fehlt in der aktuellen Konfiguration
+                missingProperties.add(key);
+                LOGGER.debug("Fehlende Konfigurationsoption gefunden: {} (Standardwert: {})", key, defaultValue);
+            }
+        }
+
+        // Wenn fehlende Eigenschaften gefunden wurden, logge eine Nachricht
+        if (!missingProperties.isEmpty()) {
+            LOGGER.info("Es wurden {} fehlende Konfigurationsoptionen gefunden:", missingProperties.size());
+            for (String key : missingProperties) {
+                String defaultValue = DefaultConfigManager.getDefault(key);
+                LOGGER.info("  - {}: \"{}\" (wird als Standardwert verwendet)", key, defaultValue);
+            }
+            LOGGER.info("Füge diese Optionen manuell zu deiner Konfigurationsdatei hinzu, um diese Meldung zu vermeiden.");
         } else {
             LOGGER.debug("Keine fehlenden Konfigurationsoptionen gefunden");
         }
