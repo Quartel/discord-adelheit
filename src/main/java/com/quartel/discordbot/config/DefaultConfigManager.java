@@ -49,6 +49,11 @@ public class DefaultConfigManager {
         registerDefault("music.permissions.pause", "DJ_ROLE");
         registerDefault("music.permissions.resume", "DJ_ROLE");
 
+        // Warteraum-Konfiguration
+        registerDefault("warteraum.channel_id", "");
+        registerDefault("warteraum.auto_leave_timeout", "60");
+        registerDefault("warteraum.default_playlist", "chill");
+
         // Hier neue Konfigurationsoptionen hinzufügen:
         // BEISPIEL: registerDefault("feature.new.option", "default value");
     }
