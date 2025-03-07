@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -144,8 +143,17 @@ public class WarteraumCommand {
                 // Ignorieren
             }
 
-            event.reply("✅ Warteraum-Modus aktiviert! Der Bot spielt jetzt die Playlist '" +
-                            playlistName + "' im Channel '" + channelName + "' ab.\n" +
+            WaitingRoomManager.WaitingRoomState state = waitingRoomManager.getWaitingRoomState(guild.getIdLong());
+            String stateMsg = "";
+
+            if (state == WaitingRoomManager.WaitingRoomState.CONNECTED) {
+                stateMsg = "Der Bot ist jetzt mit dem Channel verbunden und spielt Musik.";
+            } else if (state == WaitingRoomManager.WaitingRoomState.MONITORING) {
+                stateMsg = "Der Bot überwacht den Channel und wird automatisch verbinden, sobald ein User beitritt.";
+            }
+
+            event.reply("✅ Warteraum-Modus aktiviert! Die Playlist '" + playlistName + "' wird im Channel '" +
+                            channelName + "' abgespielt.\n" + stateMsg + "\n" +
                             "Der `/play` Befehl ist deaktiviert, solange der Warteraum-Modus aktiv ist.")
                     .queue();
         } else {
@@ -173,8 +181,9 @@ public class WarteraumCommand {
         boolean success = waitingRoomManager.deactivateWaitingRoom(guild);
 
         if (success) {
-            event.reply("✅ Warteraum-Modus deaktiviert! Der Bot hat den Sprachkanal verlassen und " +
-                    "der `/play` Befehl ist wieder verfügbar.").queue();
+            event.reply("✅ Warteraum-Modus vollständig deaktiviert! Der Bot wird nicht mehr automatisch " +
+                    "dem Warteraum beitreten.\n" +
+                    "Der `/play` Befehl ist wieder verfügbar.").queue();
         } else {
             event.reply("❌ Fehler beim Deaktivieren des Warteraum-Modus. Überprüfe die Logs für Details.")
                     .setEphemeral(true).queue();
@@ -192,6 +201,7 @@ public class WarteraumCommand {
                                      WaitingRoomManager waitingRoomManager) {
         boolean isActive = waitingRoomManager.isWaitingRoomActive(guild.getIdLong());
         boolean isConfigured = waitingRoomManager.isWaitingRoomConfigured(guild);
+        WaitingRoomManager.WaitingRoomState state = waitingRoomManager.getWaitingRoomState(guild.getIdLong());
 
         StringBuilder statusMessage = new StringBuilder();
         statusMessage.append("**Warteraum-Status:**\n");
@@ -216,11 +226,27 @@ public class WarteraumCommand {
             statusMessage.append("⚠️ Der Warteraum ist nicht konfiguriert. Bitte konfiguriere den Channel in der config.properties.\n");
         }
 
-        statusMessage.append("- Status: ").append(isActive ? "✅ **Aktiviert**" : "❌ **Deaktiviert**").append("\n");
+        statusMessage.append("- Status: ");
+
+        if (state == WaitingRoomManager.WaitingRoomState.INACTIVE) {
+            statusMessage.append("❌ **Deaktiviert**\n");
+        } else if (state == WaitingRoomManager.WaitingRoomState.MONITORING) {
+            statusMessage.append("🔍 **Überwachend** (wartet auf User im Channel)\n");
+        } else if (state == WaitingRoomManager.WaitingRoomState.CONNECTED) {
+            statusMessage.append("✅ **Aktiv und Verbunden** (spielt Musik)\n");
+        }
 
         if (isActive) {
-            statusMessage.append("- `/play` Befehl ist temporär deaktiviert\n");
-            statusMessage.append("\nVerwende `/warteraum deaktivieren`, um den Warteraum-Modus zu beenden.");
+            statusMessage.append("- Der `/play` Befehl ist temporär deaktiviert\n");
+
+            if (state == WaitingRoomManager.WaitingRoomState.MONITORING) {
+                statusMessage.append("- Der Bot wird automatisch verbinden, sobald ein User den Warteraum betritt\n");
+            } else if (state == WaitingRoomManager.WaitingRoomState.CONNECTED) {
+                statusMessage.append("- Der Bot wird den Warteraum verlassen, wenn keine User mehr anwesend sind\n");
+                statusMessage.append("- Der Warteraum-Modus bleibt aktiv und der Bot verbindet erneut, wenn User zurückkehren\n");
+            }
+
+            statusMessage.append("\nVerwende `/warteraum deaktivieren`, um den Warteraum-Modus vollständig zu beenden.");
         } else if (isConfigured) {
             statusMessage.append("\nVerwende `/warteraum aktivieren`, um den Warteraum-Modus zu starten.");
         }
