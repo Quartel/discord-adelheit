@@ -5,10 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -21,118 +24,148 @@ public class Config {
     private static final String CONFIG_EXAMPLE_FILE = "config.properties.example";
     private static final Properties properties = new Properties();
     private static boolean isLoaded = false;
+    private static Path loadedConfigPath = null;
 
     /**
      * Lädt die Konfigurationsdatei beim ersten Zugriff.
-     * Sucht die Datei in dieser Reihenfolge:
-     * 1. Im aktuellen Arbeitsverzeichnis
-     * 2. Im Unterverzeichnis "config"
-     * 3. Im .adelheit Verzeichnis im Benutzerverzeichnis
-     * 4. In den Ressourcen (eingebettet in die JAR)
+     * Versucht mehrere Orte, bis eine gültige Konfiguration gefunden wird.
      */
-    private static void loadConfig() {
+    private static synchronized void loadConfig() {
         if (isLoaded) {
             return;
         }
 
-        // Versuch 1: Im aktuellen Arbeitsverzeichnis
-        Path configPath = Paths.get(CONFIG_FILE);
-        boolean configFound = tryLoadConfig(configPath);
+        LOGGER.debug("Starte Laden der Konfiguration...");
+        List<Path> configPaths = new ArrayList<>();
 
-        // Versuch 2: Im config Unterverzeichnis
-        if (!configFound) {
-            configPath = Paths.get("config", CONFIG_FILE);
-            configFound = tryLoadConfig(configPath);
+        // Liste aller möglichen Konfigurationspfade
+        configPaths.add(Paths.get(CONFIG_FILE));
+        configPaths.add(Paths.get("config", CONFIG_FILE));
+        configPaths.add(Paths.get(System.getProperty("user.home"), ".adelheit", CONFIG_FILE));
+
+        boolean configFound = false;
+
+        // Versuche alle Pfade, bis eine gültige Konfiguration gefunden wird
+        for (Path configPath : configPaths) {
+            if (Files.exists(configPath)) {
+                LOGGER.debug("Konfigurationsdatei gefunden: {}", configPath);
+                try (InputStream input = Files.newInputStream(configPath)) {
+                    // Bestehende Properties löschen und neu laden
+                    properties.clear();
+                    properties.load(input);
+
+                    // Prüfe, ob ein Token existiert
+                    String token = properties.getProperty("bot.token");
+                    if (token != null && !token.trim().isEmpty() && !token.equals("YOUR_TOKEN_HERE") &&
+                            !token.equals("BITTE_HIER_DEIN_BOT_TOKEN_EINFÜGEN")) {
+                        loadedConfigPath = configPath;
+                        LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath.toAbsolutePath());
+                        configFound = true;
+                        isLoaded = true;
+                        break;
+                    } else {
+                        LOGGER.warn("Konfiguration in {} enthält keinen gültigen Token", configPath);
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Fehler beim Laden der Konfigurationsdatei von {}", configPath, e);
+                }
+            }
         }
 
-        // Versuch 3: Im Benutzerverzeichnis unter .adelheit
+        // Wenn keine gültige Konfiguration gefunden wurde, versuche aus Ressourcen zu laden
         if (!configFound) {
-            configPath = Paths.get(System.getProperty("user.home"), ".adelheit", CONFIG_FILE);
-            configFound = tryLoadConfig(configPath);
-        }
-
-        // Versuch 4: In resources (eingebettet in die JAR)
-        if (!configFound) {
+            LOGGER.debug("Keine gültige Konfiguration in Dateisystem gefunden, versuche eingebettete Ressource");
             try (InputStream resourceStream = Config.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
                 if (resourceStream != null) {
+                    properties.clear();
                     properties.load(resourceStream);
-                    isLoaded = true;
-                    LOGGER.info("Konfiguration aus eingebetteter Ressource geladen");
 
-                    // Wir kopieren die eingebettete Konfiguration ins Arbeitsverzeichnis für zukünftige Bearbeitungen
+                    String token = properties.getProperty("bot.token");
+                    if (token != null && !token.trim().isEmpty() && !token.equals("YOUR_TOKEN_HERE") &&
+                            !token.equals("BITTE_HIER_DEIN_BOT_TOKEN_EINFÜGEN")) {
+                        LOGGER.info("Konfiguration aus eingebetteter Ressource geladen");
+                        loadedConfigPath = Paths.get("EMBEDDED_RESOURCE");
+                        isLoaded = true;
+
+                        // Speichere die Konfiguration für spätere Bearbeitungen
+                        extractConfigToFile();
+                    } else {
+                        LOGGER.warn("Eingebettete Konfiguration enthält keinen gültigen Token");
+                        extractConfigExample();
+                    }
+                } else {
+                    LOGGER.warn("Keine eingebettete Konfiguration gefunden");
                     extractConfigExample();
-
-                    return;
                 }
             } catch (IOException e) {
                 LOGGER.error("Fehler beim Laden der eingebetteten Konfiguration", e);
+                extractConfigExample();
             }
         }
 
-        // Wenn immer noch keine Konfiguration geladen wurde, extrahieren wir die Beispielkonfiguration
+        // Wenn immer noch keine Konfiguration geladen wurde
         if (!isLoaded) {
-            LOGGER.warn("Keine Konfigurationsdatei gefunden. Erstelle Beispielkonfiguration...");
-
-            if (extractConfigExample()) {
-                // Versuche nochmals zu laden
-                configPath = Paths.get(CONFIG_FILE);
-                configFound = tryLoadConfig(configPath);
-
-                if (configFound) {
-                    LOGGER.info("Beispielkonfiguration wurde erstellt und geladen");
-                    LOGGER.warn("Bitte bearbeite die Datei {} und starte den Bot neu", configPath.toAbsolutePath());
-
-                    // Token setzen, um sicherzustellen, dass Benutzer weiß, dass er es ändern muss
-                    properties.setProperty("bot.token", "BITTE_HIER_DEIN_BOT_TOKEN_EINFÜGEN");
-                } else {
-                    LOGGER.error("Konnte die Beispielkonfiguration nicht laden");
-                }
+            LOGGER.warn("Keine gültige Konfiguration gefunden. Bot kann nicht starten.");
+            LOGGER.info("Bitte bearbeite eine der folgenden Dateien und füge deinen Bot-Token hinzu:");
+            for (Path path : configPaths) {
+                LOGGER.info(" - {}", path.toAbsolutePath());
             }
         }
     }
 
     /**
-     * Versucht, die Konfiguration aus dem angegebenen Pfad zu laden.
-     *
-     * @param configPath Pfad zur Konfigurationsdatei
-     * @return true, wenn die Konfiguration erfolgreich geladen wurde
-     */
-    private static boolean tryLoadConfig(Path configPath) {
-        if (Files.exists(configPath)) {
-            try (InputStream input = Files.newInputStream(configPath)) {
-                properties.load(input);
-                isLoaded = true;
-                LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath.toAbsolutePath());
-                return true;
-            } catch (IOException e) {
-                LOGGER.error("Fehler beim Laden der Konfigurationsdatei von {}", configPath, e);
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Extrahiert die Beispielkonfiguration aus den Ressourcen ins aktuelle Verzeichnis.
-     *
-     * @return true, wenn die Extraktion erfolgreich war
+     * Extrahiert die Beispielkonfiguration.
      */
     private static boolean extractConfigExample() {
         try (InputStream exampleStream = Config.class.getClassLoader().getResourceAsStream(CONFIG_EXAMPLE_FILE)) {
             if (exampleStream != null) {
+                // Stelle sicher, dass das Verzeichnis existiert
                 Path configDir = Paths.get("config");
                 if (!Files.exists(configDir)) {
                     Files.createDirectories(configDir);
                 }
 
-                Path examplePath = configDir.resolve(CONFIG_FILE);
-                Files.copy(exampleStream, examplePath, StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.info("Beispielkonfiguration nach {} extrahiert", examplePath.toAbsolutePath());
-                return true;
+                Path configPath = configDir.resolve(CONFIG_FILE);
+
+                // Nur kopieren, wenn die Datei noch nicht existiert
+                if (!Files.exists(configPath)) {
+                    Files.copy(exampleStream, configPath, StandardCopyOption.REPLACE_EXISTING);
+                    LOGGER.info("Beispielkonfiguration nach {} extrahiert", configPath.toAbsolutePath());
+                    LOGGER.info("Bitte füge deinen Bot-Token in diese Datei ein und starte den Bot neu");
+                    return true;
+                }
             } else {
                 LOGGER.error("Beispielkonfigurationsdatei nicht gefunden in den Ressourcen");
             }
         } catch (IOException e) {
             LOGGER.error("Fehler beim Extrahieren der Beispielkonfiguration", e);
+        }
+        return false;
+    }
+
+    /**
+     * Extrahiert die eingebettete Konfiguration in eine Datei.
+     */
+    private static boolean extractConfigToFile() {
+        try {
+            // Stelle sicher, dass das Verzeichnis existiert
+            Path configDir = Paths.get("config");
+            if (!Files.exists(configDir)) {
+                Files.createDirectories(configDir);
+            }
+
+            Path configPath = configDir.resolve(CONFIG_FILE);
+
+            // Nur speichern, wenn die Datei noch nicht existiert
+            if (!Files.exists(configPath)) {
+                LOGGER.info("Speichere Konfiguration in {}", configPath.toAbsolutePath());
+                try (OutputStream output = Files.newOutputStream(configPath)) {
+                    properties.store(output, "Konfiguration für Adelheit Discord Bot");
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Fehler beim Speichern der Konfiguration", e);
         }
         return false;
     }
@@ -172,11 +205,15 @@ public class Config {
         loadConfig();
         properties.setProperty(key, value);
 
-        // Bestimme den Pfad zum Speichern
-        Path configPath = Paths.get("config", CONFIG_FILE);
-        if (!Files.exists(configPath.getParent())) {
+        // Wenn keine Konfigurationsdatei geladen wurde, speichere in config/config.properties
+        Path savePath = (loadedConfigPath != null && !loadedConfigPath.equals(Paths.get("EMBEDDED_RESOURCE")))
+                ? loadedConfigPath
+                : Paths.get("config", CONFIG_FILE);
+
+        // Stelle sicher, dass das Verzeichnis existiert
+        if (!Files.exists(savePath.getParent())) {
             try {
-                Files.createDirectories(configPath.getParent());
+                Files.createDirectories(savePath.getParent());
             } catch (IOException e) {
                 LOGGER.error("Fehler beim Erstellen des Konfigurationsverzeichnisses", e);
                 return false;
@@ -184,8 +221,10 @@ public class Config {
         }
 
         try {
-            properties.store(Files.newOutputStream(configPath), "Konfiguration für Adelheit Discord Bot");
-            LOGGER.info("Konfiguration aktualisiert und in {} gespeichert", configPath);
+            try (OutputStream output = Files.newOutputStream(savePath)) {
+                properties.store(output, "Konfiguration für Adelheit Discord Bot");
+            }
+            LOGGER.info("Konfiguration aktualisiert und in {} gespeichert", savePath);
             return true;
         } catch (IOException e) {
             LOGGER.error("Fehler beim Speichern der aktualisierten Konfiguration", e);
@@ -314,5 +353,15 @@ public class Config {
      */
     public static String getLoggingLevel() {
         return getProperty("logging.level", "INFO");
+    }
+
+    /**
+     * Prüft, ob die Konfiguration erfolgreich geladen wurde.
+     *
+     * @return true, wenn die Konfiguration geladen wurde
+     */
+    public static boolean isConfigLoaded() {
+        loadConfig();
+        return isLoaded;
     }
 }
