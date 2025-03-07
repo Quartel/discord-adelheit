@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -62,6 +63,10 @@ public class Config {
                         LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath.toAbsolutePath());
                         configFound = true;
                         isLoaded = true;
+
+                        // Aktualisiere die Konfiguration mit neuen Optionen
+                        migrateConfig();
+
                         break;
                     } else {
                         LOGGER.warn("Konfiguration in {} enthält keinen gültigen Token", configPath);
@@ -110,6 +115,47 @@ public class Config {
             for (Path path : configPaths) {
                 LOGGER.info(" - {}", path.toAbsolutePath());
             }
+        }
+    }
+
+    /**
+     * Aktualisiert eine bestehende Konfigurationsdatei mit neuen Standardwerten.
+     * Bestehende Werte werden nicht überschrieben.
+     */
+    private static void migrateConfig() {
+        if (loadedConfigPath == null || loadedConfigPath.equals(Paths.get("EMBEDDED_RESOURCE"))) {
+            return; // Keine Migration nötig, wenn keine Datei geladen wurde
+        }
+
+        LOGGER.debug("Prüfe auf fehlende Konfigurationsoptionen...");
+
+        // Zähler für hinzugefügte Optionen
+        int addedOptions = 0;
+
+        // Prüfe auf fehlende Optionen basierend auf den registrierten Standardwerten
+        for (Map.Entry<String, String> entry : DefaultConfigManager.getAllDefaults().entrySet()) {
+            String key = entry.getKey();
+            String defaultValue = entry.getValue();
+
+            if (!properties.containsKey(key)) {
+                // Option fehlt in der aktuellen Konfiguration, füge sie hinzu
+                properties.setProperty(key, defaultValue);
+                LOGGER.debug("Neue Konfigurationsoption hinzugefügt: {} = {}", key, defaultValue);
+                addedOptions++;
+            }
+        }
+
+        // Speichere die aktualisierte Konfiguration, wenn Änderungen vorgenommen wurden
+        if (addedOptions > 0) {
+            try (OutputStream output = Files.newOutputStream(loadedConfigPath)) {
+                properties.store(output, "Konfiguration für Adelheit Discord Bot - Automatisch migriert");
+                LOGGER.info("{} neue Konfigurationsoptionen hinzugefügt und in {} gespeichert",
+                        addedOptions, loadedConfigPath);
+            } catch (IOException e) {
+                LOGGER.error("Fehler beim Speichern der migrierten Konfiguration", e);
+            }
+        } else {
+            LOGGER.debug("Keine fehlenden Konfigurationsoptionen gefunden");
         }
     }
 
@@ -172,26 +218,36 @@ public class Config {
 
     /**
      * Gibt den Wert für den angegebenen Schlüssel zurück.
+     * Wenn der Schlüssel nicht in der Konfiguration gefunden wird, wird der registrierte
+     * Standardwert zurückgegeben.
      *
      * @param key Der Schlüssel der Eigenschaft
-     * @return Der Wert für den Schlüssel oder null, wenn der Schlüssel nicht existiert
+     * @return Der Wert für den Schlüssel, der registrierte Standardwert oder null
      */
     public static String getProperty(String key) {
         loadConfig();
-        return properties.getProperty(key);
+        String value = properties.getProperty(key);
+
+        if (value == null) {
+            // Wenn der Wert nicht in der Konfiguration gefunden wurde,
+            // verwende den registrierten Standardwert
+            return DefaultConfigManager.getDefault(key);
+        }
+
+        return value;
     }
 
     /**
-     * Gibt den Wert für den angegebenen Schlüssel zurück oder den Standardwert,
-     * wenn der Schlüssel nicht existiert.
+     * Gibt den Wert für den angegebenen Schlüssel zurück oder den angegebenen Standardwert,
+     * wenn der Schlüssel nicht existiert oder keinen registrierten Standardwert hat.
      *
      * @param key          Der Schlüssel der Eigenschaft
      * @param defaultValue Der Standardwert, der zurückgegeben werden soll, wenn der Schlüssel nicht existiert
-     * @return Der Wert für den Schlüssel oder der Standardwert, wenn der Schlüssel nicht existiert
+     * @return Der Wert für den Schlüssel oder der angegebene Standardwert
      */
     public static String getProperty(String key, String defaultValue) {
-        loadConfig();
-        return properties.getProperty(key, defaultValue);
+        String value = getProperty(key);
+        return (value != null) ? value : defaultValue;
     }
 
     /**
@@ -230,6 +286,15 @@ public class Config {
             LOGGER.error("Fehler beim Speichern der aktualisierten Konfiguration", e);
             return false;
         }
+    }
+
+    /**
+     * Lädt die Konfiguration neu.
+     */
+    public static void reloadConfig() {
+        isLoaded = false;
+        loadConfig();
+        LOGGER.info("Konfiguration neu geladen");
     }
 
     /**
