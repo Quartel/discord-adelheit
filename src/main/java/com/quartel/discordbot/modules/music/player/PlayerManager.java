@@ -207,6 +207,56 @@ public class PlayerManager {
     }
 
     /**
+     * Lädt und spielt eine Audioquelle direkt für einen Server (ohne Event).
+     * Diese Methode wird für den Warteraum-Modus verwendet.
+     *
+     * @param guild       Die Guild, für die die Audioquelle geladen werden soll
+     * @param trackUrl    Die URL oder der Pfad der abzuspielenden Audiodatei
+     */
+    public void loadAndPlay(Guild guild, String trackUrl) {
+        if (guild == null) {
+            LOGGER.error("Guild ist null beim Laden von: {}", trackUrl);
+            return;
+        }
+
+        GuildMusicManager musicManager = getMusicManager(guild);
+        musicManager.updateActivity();
+
+        // Lade den Track mit LavaPlayer
+        audioPlayerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                // Ein einzelner Track wurde geladen
+                LOGGER.info("Track geladen für Warteraum: {} - {}", track.getInfo().title, track.getInfo().uri);
+                musicManager.getTrackScheduler().queue(track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                // Eine Playlist wurde geladen
+                LOGGER.info("Playlist geladen für Warteraum: {} mit {} Tracks",
+                        playlist.getName(), playlist.getTracks().size());
+
+                for (AudioTrack track : playlist.getTracks()) {
+                    musicManager.getTrackScheduler().queue(track);
+                }
+            }
+
+            @Override
+            public void noMatches() {
+                // Keine Treffer gefunden
+                LOGGER.warn("Keine Treffer gefunden für Warteraum-Track: {}", trackUrl);
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                // Laden fehlgeschlagen
+                LOGGER.error("Fehler beim Laden des Warteraum-Tracks: {}", exception.getMessage(), exception);
+            }
+        });
+    }
+
+    /**
      * Überprüft alle Server auf inaktive Verbindungen und trennt sie gegebenenfalls.
      */
     private void checkInactiveConnections() {
@@ -262,56 +312,4 @@ public class PlayerManager {
         audioPlayerManager.shutdown();
         LOGGER.info("PlayerManager heruntergefahren");
     }
-
-    /**
-     * Lädt und spielt eine Audioquelle auf einem Server ohne SlashCommandInteractionEvent.
-     * Diese Methode wird vom WaitingRoomManager verwendet.
-     *
-     * @param guild    Die Guild, auf der die Audioquelle abgespielt werden soll
-     * @param trackUrl Die URL oder Suchbegriff für den abzuspielenden Track
-     */
-    public void loadAndPlay(Guild guild, String trackUrl) {
-        if (guild == null) {
-            LOGGER.error("Guild ist null beim Laden eines Tracks");
-            return;
-        }
-
-        GuildMusicManager musicManager = getMusicManager(guild);
-        musicManager.updateActivity();
-
-        // Lade den Track mit LavaPlayer
-        audioPlayerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                // Ein einzelner Track wurde geladen
-                LOGGER.info("Track geladen für Warteraum: {} - {}", track.getInfo().title, track.getInfo().uri);
-                musicManager.getTrackScheduler().queue(track);
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                // Eine Playlist wurde geladen
-                LOGGER.info("Playlist geladen für Warteraum: {} mit {} Tracks",
-                        playlist.getName(), playlist.getTracks().size());
-
-                // Bei einer tatsächlichen Playlist, alle Tracks zur Warteschlange hinzufügen
-                for (AudioTrack track : playlist.getTracks()) {
-                    musicManager.getTrackScheduler().queue(track);
-                }
-            }
-
-            @Override
-            public void noMatches() {
-                // Keine Treffer gefunden
-                LOGGER.info("Keine Treffer gefunden für Warteraum: {}", trackUrl);
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                // Laden fehlgeschlagen
-                LOGGER.error("Fehler beim Laden des Tracks für Warteraum: {}", exception.getMessage(), exception);
-            }
-        });
-    }
 }
-
