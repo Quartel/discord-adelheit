@@ -1,5 +1,6 @@
 # Sensible Konfigurationsdateien
 src/main/resources/config.properties
+/scripts/config/config.properties
 
 # Logs
 logs/
