@@ -5,7 +5,7 @@
 Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwiedergabe und Verwaltung in Discord-Servern zu ermöglichen.
 
 ## 🚧 Pre-Release Hinweis
-**Version: 0.2.0-alpha**
+**Version: 0.3.0-alpha**
 
 ⚠️ **Achtung:** Dies ist eine frühe Alpha-Version. Der Bot kann Fehler enthalten und die Funktionalität ist möglicherweise eingeschränkt.
 
@@ -14,16 +14,16 @@ Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwieder
 - Fehlende GUI für Konfigurationsänderungen
 - Keine Unterstützung für Spotify-Links
 
-## 🆕 Was ist neu in 0.2.0-alpha
-- Implementiertes Berechtigungssystem für Befehle
-- Verbesserte Fehlerbehandlung bei der Musikwiedergabe
-- Unterstützung für Auto-Vervollständigung bei Playlist-Befehlen
-- Optimierte Audioverbindungen
-- Erweiterte Logging-Funktionalität
+## 🆕 Was ist neu in 0.3.0-alpha
+- **Warteraummusik-Modus**: Automatisches Abspielen von Musik in speziellen Warteräumen
+- **Benutzerfreundliche Startskripte**: Einfacher Start mit Windows (.bat) oder Linux (.sh)
+- Verbesserte Stabilität und Ressourcenoptimierung
+- Verschiedene kleinere Fehlerbehebungen
 
 ## ✨ Funktionen
 
 - 🎵 Musik von SoundCloud und lokalen Bibliotheken abspielen
+- 🎧 Warteraummusik mit automatischer Aktivierung/Deaktivierung
 - ⏭️ Tracks überspringen
 - ⏸️ Wiedergabe pausieren und fortsetzen
 - 🔊 Lautstärke anpassen
@@ -50,11 +50,35 @@ Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwieder
 ## 🚀 Installation
 
 ### Voraussetzungen
-- Linux-System (getestet auf Ubuntu)
-- Internetverbindung
+- Java 21 oder höher
 - Discord Bot Token
+- Internet-Verbindung
 
-### Installationsschritte
+### Einfache Installation (Neu in 0.3.0!)
+
+#### Windows
+1. Lade die neueste Version von der [Releases-Seite](https://github.com/Quartel/discord-adelheit/releases) herunter
+2. Entpacke die ZIP-Datei in einen Ordner deiner Wahl
+3. Starte den Bot mit Doppelklick auf `start-bot.bat`
+4. Folge den Anweisungen zur Erstkonfiguration
+
+#### Linux
+1. Lade die neueste Version herunter
+   ```bash
+   wget https://github.com/Quartel/discord-adelheit/releases/download/v0.3.0-alpha/discord-adelheit-0.3.0-alpha-distribution.zip
+   ```
+2. Entpacke die ZIP-Datei
+   ```bash
+   unzip discord-adelheit-0.3.0-alpha-distribution.zip
+   cd adelheit-discord-bot
+   ```
+3. Starte den Bot
+   ```bash
+   ./start-bot.sh
+   ```
+4. Folge den Anweisungen zur Erstkonfiguration
+
+### Manuelle Installation (für Entwickler)
 
 #### 1. Systemaktualisierung
 ```bash
@@ -106,7 +130,7 @@ mvn clean package
 #### 7. Bot starten
 ```bash
 # Direkter Start
-java -jar target/discord-adelheit-0.2.0-alpha-jar-with-dependencies.jar
+java -jar target/discord-adelheit-0.3.0-alpha-jar-with-dependencies.jar
 ```
 
 ### Produktivbetrieb mit Systemd
@@ -126,7 +150,7 @@ After=network.target
 Type=simple
 User=DEIN_BENUTZERNAME
 WorkingDirectory=/home/DEIN_BENUTZERNAME/Projects/discord-adelheit
-ExecStart=/usr/bin/java -jar /home/DEIN_BENUTZERNAME/Projects/discord-adelheit/target/discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+ExecStart=/usr/bin/java -jar /home/DEIN_BENUTZERNAME/Projects/discord-adelheit/target/discord-adelheit-0.3.0-alpha-jar-with-dependencies.jar
 Restart=on-failure
 
 [Install]
@@ -147,7 +171,7 @@ sudo systemctl status adelheit-bot
 
 ### Musik-Befehle
 - `/play [song/playlist]`: Musik abspielen
-    - Unterstützt YouTube/SoundCloud URLs und Suchbegriffe
+    - Unterstützt SoundCloud URLs und lokale Musik
     - Mit Playlist-Autocompletion für lokale Musik
 - `/skip`: Aktuellen Track überspringen
 - `/stop`: Wiedergabe stoppen und Warteschlange leeren
@@ -157,6 +181,10 @@ sudo systemctl status adelheit-bot
 - `/pause`: Wiedergabe pausieren
 - `/resume`: Wiedergabe fortsetzen
 - `/play preview:[playlist]`: Vorschau der Tracks in einer Playlist anzeigen
+
+### Warteraum-Befehle (Neu in 0.3.0!)
+- `/warteraum aktivieren`: Aktiviert den Warteraummusik-Modus
+- `/warteraum deaktivieren`: Deaktiviert den Warteraummusik-Modus
 
 ## 📂 Lokale Playlists einrichten
 
