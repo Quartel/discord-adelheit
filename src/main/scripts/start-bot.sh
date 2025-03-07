@@ -31,6 +31,9 @@ if [ ! -f "config/config.properties" ]; then
     echo "(Du findest ihn im Discord Developer Portal: https://discord.com/developers/applications)"
     read -p "> " BOT_TOKEN
 
+    # Token trimmen (Leerzeichen am Anfang und Ende entfernen)
+    BOT_TOKEN=$(echo "$BOT_TOKEN" | xargs)
+
     # Erstelle Konfigurationsdatei mit dem Token
     cat > config/config.properties << EOF
 # Bot Konfiguration
@@ -65,7 +68,7 @@ echo
 echo "Die Log-Datei findest du unter logs/bot.log"
 echo
 
-java -Xms128m -Xmx256m -jar discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -Xms128m -Xmx256m -jar discord-adelheit-1.0-SNAPSHOT.jar
 
 # Wenn der Bot unerwartet beendet wurde
 echo

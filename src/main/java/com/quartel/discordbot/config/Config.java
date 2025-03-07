@@ -194,12 +194,24 @@ public class Config {
     }
 
     /**
-     * Gibt den Bot-Token zurück.
+     * Gibt den Bot-Token zurück, nachdem Leerzeichen entfernt wurden.
      *
-     * @return Der Bot-Token aus der Konfiguration
+     * @return Der Bot-Token aus der Konfiguration, ohne führende oder nachfolgende Leerzeichen
      */
     public static String getToken() {
-        return getProperty("bot.token");
+        String token = getProperty("bot.token");
+        if (token != null) {
+            // Leerzeichen am Anfang und Ende entfernen
+            token = token.trim();
+
+            // Prüfen, ob der Token nach dem Trimmen geändert wurde und ggf. aktualisieren
+            String originalToken = getProperty("bot.token");
+            if (!token.equals(originalToken)) {
+                LOGGER.info("Token enthielt Leerzeichen, die entfernt wurden");
+                updateProperty("bot.token", token);
+            }
+        }
+        return token;
     }
 
     /**

@@ -30,11 +30,19 @@ if not exist "config\config.properties" (
     :: Frage nach dem Bot-Token
     echo Bitte gib deinen Discord Bot-Token ein:
     echo (Du findest ihn im Discord Developer Portal: https://discord.com/developers/applications)
-    set /p BOT_TOKEN="> "
+    set /p "BOT_TOKEN=> "
+
+    :: Token trimmen (Leerzeichen am Anfang und Ende entfernen)
+    for /f "tokens=* delims= " %%a in ("!BOT_TOKEN!") do set "BOT_TOKEN=%%a"
+    :trim_loop
+    if "!BOT_TOKEN:~-1!"==" " (
+        set "BOT_TOKEN=!BOT_TOKEN:~0,-1!"
+        goto trim_loop
+    )
 
     :: Erstelle Konfigurationsdatei mit dem Token
     echo # Bot Konfiguration > config\config.properties
-    echo bot.token=%BOT_TOKEN% >> config\config.properties
+    echo bot.token=!BOT_TOKEN! >> config\config.properties
     echo bot.prefix=! >> config\config.properties
     echo bot.activity=Musik >> config\config.properties
     echo. >> config\config.properties
@@ -61,7 +69,7 @@ echo.
 echo Die Log-Datei findest du unter logs\bot.log
 echo.
 
-java -Xms128m -Xmx256m -jar discord-adelheit-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -Xms128m -Xmx256m -jar discord-adelheit-1.0-SNAPSHOT.jar
 
 :: Wenn der Bot unerwartet beendet wurde
 echo.
