@@ -3,6 +3,7 @@ package com.quartel.discordbot.modules.music;
 import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.music.commands.*;
 import com.quartel.discordbot.modules.music.player.PlayerManager;
+import com.quartel.discordbot.modules.music.util.WaitingRoomManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -56,6 +57,9 @@ public class MusicModule extends Module {
         // Setze die JDA-Instanz im PlayerManager
         PlayerManager.getInstance().setJDA(jda);
 
+        // WaitingRoomManager initialisieren
+        WaitingRoomManager.getInstance().setJDA(jda);
+
         // Registriere den Event-Listener
         jda.addEventListener(commandListener);
 
@@ -76,6 +80,7 @@ public class MusicModule extends Module {
                         commands.add(VolumeCommand.getCommandData());
                         commands.add(PauseResumeCommand.getPauseCommandData());
                         commands.add(PauseResumeCommand.getResumeCommandData());
+                        commands.add(WarteraumCommand.getCommandData());
 
                         // Nach dem Löschen globaler Befehle NUR guild-spezifische Befehle registrieren
                         for (Guild guild : jda.getGuilds()) {
@@ -117,6 +122,9 @@ public class MusicModule extends Module {
 
         // Bereinige Ressourcen
         PlayerManager.getInstance().shutdown();
+
+        // WaitingRoomManager herunterfahren
+        WaitingRoomManager.getInstance().shutdown();
     }
 
     /**
@@ -156,6 +164,9 @@ public class MusicModule extends Module {
                     break;
                 case "resume":
                     PauseResumeCommand.handleResume(event);
+                    break;
+                case "warteraum":
+                    WarteraumCommand.handle(event);
                     break;
             }
         }
