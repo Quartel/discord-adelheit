@@ -25,17 +25,31 @@ if [ ! -f "config/config.properties" ]; then
 
     # Stelle sicher, dass das config-Verzeichnis existiert
     mkdir -p config
-
-    # Frage nach dem Bot-Token
-    echo "Bitte gib deinen Discord Bot-Token ein:"
-    echo "(Du findest ihn im Discord Developer Portal: https://discord.com/developers/applications)"
-    read -p "> " BOT_TOKEN
-
-    # Token trimmen (Leerzeichen am Anfang und Ende entfernen)
-    BOT_TOKEN=$(echo "$BOT_TOKEN" | xargs)
-
-    # Erstelle Konfigurationsdatei mit dem Token
-    cat > config/config.properties << EOF
+    
+    # Prüfe, ob die Beispielkonfiguration existiert
+    if [ -f "config/config.properties.example" ]; then
+        # Kopiere die Beispieldatei
+        cp config/config.properties.example config/config.properties
+        
+        # Frage nach dem Bot-Token
+        echo "Bitte gib deinen Discord Bot-Token ein:"
+        echo "(Du findest ihn im Discord Developer Portal: https://discord.com/developers/applications)"
+        read -p "> " BOT_TOKEN
+        
+        # Token trimmen (Leerzeichen am Anfang und Ende entfernen)
+        BOT_TOKEN=$(echo "$BOT_TOKEN" | xargs)
+        
+        # Ersetze den Platzhalter-Token in der Konfigurationsdatei
+        sed -i "s/bot.token=YOUR_TOKEN_HERE/bot.token=$BOT_TOKEN/g" config/config.properties
+        
+        echo
+        echo "[INFO] Konfigurationsdatei aus Vorlage erstellt. Du kannst Einstellungen in config/config.properties anpassen."
+        echo
+    else
+        echo "[WARNING] Beispielkonfiguration nicht gefunden. Erstelle Standard-Konfiguration."
+        
+        # Erstelle eine vollständige Konfigurationsdatei
+        cat > config/config.properties << EOF
 # Bot Konfiguration
 bot.token=$BOT_TOKEN
 bot.prefix=!
@@ -47,11 +61,31 @@ modules.enabled=music
 # Musik-Modul-Konfiguration
 music.volume.default=50
 music.timeout=60
-EOF
+music.max_queue_size=100
+music.auto_leave_timeout=300
+music.allowed_formats=mp3,wav,flac
+music.max_volume=200
+music.default_playlist=chill
 
-    echo
-    echo "[INFO] Konfigurationsdatei erstellt. Du kannst weitere Einstellungen in config/config.properties ändern."
-    echo
+# Berechtigungen für Musikbefehle
+# Mögliche Werte: EVERYONE, DJ_ROLE, ADMIN_ROLE, SERVER_OWNER
+music.permissions.play=DJ_ROLE
+music.permissions.skip=DJ_ROLE
+music.permissions.stop=DJ_ROLE
+music.permissions.queue=EVERYONE
+music.permissions.nowplaying=EVERYONE
+music.permissions.volume=DJ_ROLE
+music.permissions.pause=DJ_ROLE
+music.permissions.resume=DJ_ROLE
+
+# Logging
+logging.level=INFO
+EOF
+        
+        echo
+        echo "[INFO] Standard-Konfigurationsdatei erstellt. Du kannst Einstellungen in config/config.properties anpassen."
+        echo
+    fi
 fi
 
 # Stelle sicher, dass logs-Verzeichnis existiert
