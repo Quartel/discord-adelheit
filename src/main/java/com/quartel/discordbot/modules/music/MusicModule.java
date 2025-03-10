@@ -64,45 +64,52 @@ public class MusicModule extends Module {
         jda.addEventListener(commandListener);
 
         try {
-            // WICHTIG: Zuerst ALLE globalen Commands explizit löschen, um doppelte Einträge zu vermeiden
-            LOGGER.info("Lösche alle globalen Befehle, um Duplikate zu vermeiden...");
-            jda.updateCommands().queue(
-                    success -> {
-                        LOGGER.info("Globale Befehle erfolgreich gelöscht");
+            // Liste der Musik-Befehle erstellen
+            List<CommandData> commands = new ArrayList<>();
+            commands.add(PlayCommand.getCommandData());
+            commands.add(SkipCommand.getCommandData());
+            commands.add(StopCommand.getCommandData());
+            commands.add(QueueCommand.getCommandData());
+            commands.add(NowPlayingCommand.getCommandData());
+            commands.add(VolumeCommand.getCommandData());
+            commands.add(PauseResumeCommand.getPauseCommandData());
+            commands.add(PauseResumeCommand.getResumeCommandData());
+            commands.add(WarteraumCommand.getCommandData());
 
-                        // Liste der Musik-Befehle erstellen
-                        List<CommandData> commands = new ArrayList<>();
-                        commands.add(PlayCommand.getCommandData());
-                        commands.add(SkipCommand.getCommandData());
-                        commands.add(StopCommand.getCommandData());
-                        commands.add(QueueCommand.getCommandData());
-                        commands.add(NowPlayingCommand.getCommandData());
-                        commands.add(VolumeCommand.getCommandData());
-                        commands.add(PauseResumeCommand.getPauseCommandData());
-                        commands.add(PauseResumeCommand.getResumeCommandData());
-                        commands.add(WarteraumCommand.getCommandData());
+            // Registriere die Musik-Befehle für jede Guild
+            for (Guild guild : jda.getGuilds()) {
+                // Bestehende Befehle abrufen
+                guild.retrieveCommands().queue(existingCommands -> {
+                    // Erstelle eine Liste mit allen bestehenden Befehlsdaten
+                    List<CommandData> updatedCommands = new ArrayList<>();
 
-                        // Nach dem Löschen globaler Befehle NUR guild-spezifische Befehle registrieren
-                        for (Guild guild : jda.getGuilds()) {
-                            // Zuerst alle bestehenden Guild-Befehle löschen
-                            guild.updateCommands().queue(
-                                    guildCleanSuccess -> {
-                                        LOGGER.info("Bestehende Befehle für Guild {} gelöscht", guild.getName());
+                    // Behalte alle Befehle, die nicht zu Musik gehören
+                    for (net.dv8tion.jda.api.interactions.commands.Command cmd : existingCommands) {
+                        String name = cmd.getName();
+                        // Wenn es kein Musik-Befehl ist, behalte ihn
+                        if (!name.equals("play") && !name.equals("skip") && !name.equals("stop") &&
+                                !name.equals("queue") && !name.equals("nowplaying") && !name.equals("volume") &&
+                                !name.equals("pause") && !name.equals("resume") && !name.equals("warteraum")) {
 
-                                        // Dann neue Befehle hinzufügen
-                                        guild.updateCommands().addCommands(commands).queue(
-                                                guildSuccess -> LOGGER.info("Musik-Befehle erfolgreich für Guild {} registriert", guild.getName()),
-                                                guildError -> LOGGER.error("Fehler beim Registrieren der Musik-Befehle für Guild {}: {}",
-                                                        guild.getName(), guildError.getMessage())
-                                        );
-                                    },
-                                    guildCleanError -> LOGGER.error("Fehler beim Löschen von Befehlen für Guild {}: {}",
-                                            guild.getName(), guildCleanError.getMessage())
-                            );
+                            // Konvertiere den bestehenden Befehl in CommandData
+                            CommandData cmdData = net.dv8tion.jda.api.interactions.commands.build.Commands.slash(
+                                    cmd.getName(), cmd.getDescription());
+                            updatedCommands.add(cmdData);
                         }
-                    },
-                    error -> LOGGER.error("Fehler beim Löschen globaler Befehle: {}", error.getMessage())
-            );
+                    }
+
+                    // Füge die neuen Musik-Befehle hinzu
+                    updatedCommands.addAll(commands);
+
+                    // Aktualisiere die Befehle auf dem Server
+                    guild.updateCommands().addCommands(updatedCommands).queue(
+                            success -> LOGGER.info("Musik-Befehle erfolgreich für Guild {} aktualisiert", guild.getName()),
+                            error -> LOGGER.error("Fehler beim Aktualisieren der Befehle für Guild {}: {}",
+                                    guild.getName(), error.getMessage())
+                    );
+                }, error -> LOGGER.error("Fehler beim Abrufen der Befehle für Guild {}: {}",
+                        guild.getName(), error.getMessage()));
+            }
         } catch (Exception e) {
             LOGGER.error("Fehler bei der Befehlsregistrierung: {}", e.getMessage(), e);
         }
