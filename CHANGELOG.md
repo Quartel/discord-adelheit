@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1-alpha] - 2025-03-10
+
+### Behoben
+- Schreibfehler im Startscript. Ä,Ö,Ü, etc. funktionieren jetzt.
+- Kleinere Bugfixes
+
+### Geändert
+- Angepasstes Startscript (Nutzerfreundlichkeit erhöht. Fehleranfälligkeit verringert).
+
+
 ## [0.3.0-alpha] - 2025-03-07
 
 ### Added
@@ -17,6 +27,7 @@
 ### Fixed
 - Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen
 - Optimierte Ressourcennutzung während Inaktivitätsperioden
+
 
 ## [0.2.0-alpha] - 2025-03-06
 
