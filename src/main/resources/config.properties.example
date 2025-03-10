@@ -31,5 +31,14 @@ warteraum.channel_id=YOUR_CHANNEL_ID_HERE
 warteraum.auto_leave_timeout=60
 warteraum.default_playlist=chill
 
+# Ticket-System Konfiguration
+ticket.category_id=KATEGORIE_ID_HIER_EINFÜGEN
+ticket.log_channel_id=LOG_KANAL_ID_HIER_EINFÜGEN
+ticket.staff_role_id=STAFF_ROLLEN_ID_HIER_EINFÜGEN
+ticket.mention_staff=true
+ticket.panel_title=Support-Ticket erstellen
+ticket.panel_description=Klicke auf den Button unten, um ein Support-Ticket zu erstellen.
+ticket.button_label=Ticket erstellen
+
 # Logging
 logging.level=INFO
