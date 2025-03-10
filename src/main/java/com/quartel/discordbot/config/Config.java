@@ -51,25 +51,34 @@ public class Config {
             if (Files.exists(configPath)) {
                 LOGGER.debug("Konfigurationsdatei gefunden: {}", configPath);
                 try (InputStream input = Files.newInputStream(configPath)) {
-                    // Bestehende Properties löschen und neu laden
-                    properties.clear();
+                    // Eigenschaften laden, ohne vorher zu löschen
                     properties.load(input);
 
-                    // Prüfe, ob ein Token existiert
-                    String token = properties.getProperty("bot.token");
-                    if (token != null && !token.trim().isEmpty() && !token.equals("YOUR_TOKEN_HERE") &&
-                            !token.equals("BITTE_HIER_DEIN_BOT_TOKEN_EINFÜGEN")) {
+                    // Speichere den aktuellen Token-Wert
+                    String currentToken = properties.getProperty("bot.token");
+                    boolean validTokenExists = currentToken != null &&
+                            !currentToken.trim().isEmpty() &&
+                            !currentToken.equals("YOUR_TOKEN_HERE") &&
+                            !currentToken.equals("DEIN_TOKEN_HIER");
+
+                    if (validTokenExists) {
                         loadedConfigPath = configPath;
                         LOGGER.info("Konfiguration erfolgreich geladen von {}", configPath.toAbsolutePath());
                         configFound = true;
                         isLoaded = true;
 
-                        // Aktualisiere die Konfiguration mit neuen Optionen
+                        // Überprüfe und ergänze fehlende Eigenschaften
                         checkMissingProperties();
+
+                        // Stelle sicher, dass der ursprüngliche Token beibehalten wird
+                        properties.setProperty("bot.token", currentToken);
+                        LOGGER.debug("Bestehender Bot-Token wurde beibehalten");
 
                         break;
                     } else {
                         LOGGER.warn("Konfiguration in {} enthält keinen gültigen Token", configPath);
+                        // Leere die Properties für den nächsten Versuch
+                        properties.clear();
                     }
                 } catch (IOException e) {
                     LOGGER.error("Fehler beim Laden der Konfigurationsdatei von {}", configPath, e);
