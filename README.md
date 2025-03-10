@@ -57,28 +57,29 @@ Adelheit ist ein Discord-Musikbot, der entwickelt wurde, um nahtlose Musikwieder
 ### Einfache Installation (Neu in 0.3.0!)
 
 #### Windows
-1. Lade die neueste Version von der [Releases-Seite](https://github.com/Quartel/discord-adelheit/releases) herunter
-2. Entpacke die ZIP-Datei in einen Ordner deiner Wahl
-3. Starte den Bot mit Doppelklick auf `start-bot.bat`
-4. Folge den Anweisungen zur Erstkonfiguration
+1. Installiere Java (21 oder höher)
+2. Lade die neueste Version von der [Releases-Seite](https://github.com/Quartel/discord-adelheit/releases) herunter
+3. Entpacke die ZIP-Datei in einen Ordner deiner Wahl
+4. Starte den Bot mit Doppelklick auf `start-bot.bat`
 
 #### Linux
-1. Lade die neueste Version herunter
+1. Installiere Java (21 oder höher)
+2. Lade die neueste Version herunter
    ```bash
-   wget https://github.com/Quartel/discord-adelheit/releases/download/v0.3.0-alpha/discord-adelheit-0.3.0-alpha-distribution.zip
+   wget https://github.com/Quartel/discord-adelheit/releases/download/v0.3.1-alpha/discord-adelheit-0.3.1-alpha-distribution.zip
    ```
-2. Entpacke die ZIP-Datei
+3. Entpacke die ZIP-Datei
    ```bash
-   unzip discord-adelheit-0.3.0-alpha-distribution.zip
+   unzip discord-adelheit-0.3.1-alpha-distribution.zip
    cd adelheit-discord-bot
    ```
-3. Starte den Bot
+4. Starte den Bot
    ```bash
    ./start-bot.sh
    ```
-4. Folge den Anweisungen zur Erstkonfiguration
+5. Folge den Anweisungen zur Erstkonfiguration
 
-### Manuelle Installation (für Entwickler)
+### Manuelle Installation Linux (für Entwickler)
 
 #### 1. Systemaktualisierung
 ```bash
