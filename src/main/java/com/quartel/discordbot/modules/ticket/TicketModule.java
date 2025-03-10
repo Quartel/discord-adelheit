@@ -3,6 +3,7 @@ package com.quartel.discordbot.modules.ticket;
 import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.ticket.commands.SetupTicketCommand;
 import com.quartel.discordbot.modules.ticket.listener.TicketButtonListener;
+import com.quartel.discordbot.modules.ticket.listener.TicketModalListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -22,6 +23,7 @@ public class TicketModule extends Module {
     private static final Logger LOGGER = LoggerFactory.getLogger(TicketModule.class);
     private final TicketCommandListener commandListener;
     private final TicketButtonListener buttonListener;
+    private final TicketModalListener modalListener;
 
     /**
      * Initialisiert das Ticket-Modul.
@@ -31,6 +33,7 @@ public class TicketModule extends Module {
         super("ticket", "Ticket-System für Support-Anfragen");
         this.commandListener = new TicketCommandListener();
         this.buttonListener = new TicketButtonListener();
+        this.modalListener = new TicketModalListener();
         LOGGER.info("Ticket-Modul initialisiert");
     }
 
@@ -55,6 +58,7 @@ public class TicketModule extends Module {
         // Listener registrieren
         jda.addEventListener(commandListener);
         jda.addEventListener(buttonListener);
+        jda.addEventListener(modalListener);
 
         try {
             // Liste der Ticket-Befehle erstellen
@@ -87,6 +91,7 @@ public class TicketModule extends Module {
         // Entferne die Event-Listener
         jda.removeEventListener(commandListener);
         jda.removeEventListener(buttonListener);
+        jda.removeEventListener(modalListener);
     }
 
     /**

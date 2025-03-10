@@ -4,7 +4,7 @@ bot.prefix=!
 bot.activity=Musik
 
 # Modul-Konfiguration
-modules.enabled=music
+modules.enabled=music,ticket
 
 # Musik-Modul-Konfiguration
 music.volume.default=50

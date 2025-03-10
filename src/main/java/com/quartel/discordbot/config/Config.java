@@ -507,4 +507,40 @@ public class Config {
         loadConfig();
         return isLoaded;
     }
+
+    /**
+     * Gibt die Ticket-Kategorie-ID zurück.
+     *
+     * @return Die Ticket-Kategorie-ID oder null, wenn nicht konfiguriert
+     */
+    public static String getTicketCategoryId() {
+        return getProperty("ticket.category_id");
+    }
+
+    /**
+     * Gibt die Ticket-Log-Kanal-ID zurück.
+     *
+     * @return Die Ticket-Log-Kanal-ID oder null, wenn nicht konfiguriert
+     */
+    public static String getTicketLogChannelId() {
+        return getProperty("ticket.log_channel_id");
+    }
+
+    /**
+     * Gibt die Ticket-Staff-Rollen-ID zurück.
+     *
+     * @return Die Ticket-Staff-Rollen-ID oder null, wenn nicht konfiguriert
+     */
+    public static String getTicketStaffRoleId() {
+        return getProperty("ticket.staff_role_id");
+    }
+
+    /**
+     * Prüft, ob Staff-Mitglieder bei neuen Tickets benachrichtigt werden sollen.
+     *
+     * @return true, wenn Staff-Mitglieder benachrichtigt werden sollen
+     */
+    public static boolean shouldMentionStaffInTickets() {
+        return Boolean.parseBoolean(getProperty("ticket.mention_staff", "true"));
+    }
 }
