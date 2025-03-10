@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 :: Adelheit Discord Bot Startskript für Windows
@@ -157,7 +158,7 @@ echo.
 echo Die Log-Datei findest du unter logs\bot.log
 echo.
 
-java -Xms128m -Xmx256m -jar discord-adelheit-0.3.0-alpha.jar
+java -Xms128m -Xmx256m -Dfile.encoding=UTF-8 -jar discord-adelheit-0.3.0-alpha.jar
 
 :: Wenn der Bot unerwartet beendet wurde
 echo.

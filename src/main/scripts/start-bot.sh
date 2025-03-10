@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Setze explizit UTF-8 Zeichenkodierung
+export LANG=de_DE.UTF-8
+export LC_ALL=de_DE.UTF-8
+
 # Adelheit Discord Bot Startskript für Linux
 
 echo
@@ -124,7 +128,7 @@ echo
 echo "Die Log-Datei findest du unter logs/bot.log"
 echo
 
-java -Xms128m -Xmx256m -jar discord-adelheit-0.3.0-alpha.jar
+java -Xms128m -Xmx256m -Dfile.encoding=UTF-8 -jar discord-adelheit-0.3.0-alpha.jar
 
 # Wenn der Bot unerwartet beendet wurde
 echo
