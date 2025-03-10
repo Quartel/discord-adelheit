@@ -54,6 +54,15 @@ public class DefaultConfigManager {
         registerDefault("warteraum.auto_leave_timeout", "60");
         registerDefault("warteraum.default_playlist", "chill");
 
+        // Ticket-System Konfiguration
+        registerDefault("ticket.category_id", "");
+        registerDefault("ticket.log_channel_id", "");
+        registerDefault("ticket.staff_role_id", "");
+        registerDefault("ticket.mention_staff", "true");
+        registerDefault("ticket.panel_title", "Support-Ticket erstellen");
+        registerDefault("ticket.panel_description", "Klicke auf den Button unten, um ein Support-Ticket zu erstellen.");
+        registerDefault("ticket.button_label", "Ticket erstellen");
+
         // Hier neue Konfigurationsoptionen hinzufügen:
         // BEISPIEL: registerDefault("feature.new.option", "default value");
     }

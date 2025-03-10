@@ -7,6 +7,7 @@ import com.quartel.discordbot.core.listeners.SlashCommandListener;
 import com.quartel.discordbot.modules.Module;
 import com.quartel.discordbot.modules.music.MusicModule;
 import com.quartel.discordbot.util.CommandCleaner;
+import com.quartel.discordbot.modules.ticket.TicketModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -186,6 +187,9 @@ public class Bot extends ListenerAdapter {
     private void registerModules() {
         // Musik-Modul registrieren
         registerModule(new MusicModule());
+
+        // Ticket-Modul registrieren
+        registerModule(new TicketModule());
 
         // Hier könnten weitere Module registriert werden
 
